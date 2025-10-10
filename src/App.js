@@ -1,44 +1,32 @@
-/*import React from 'react';
+import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import './App.css';
+import { auth } from './firebase_data/firebase';
 import LandingPage from './pages/LandingPage';
-import LoginForm from './LoginForm';
-import Navbar from './components/Navbar';
-import './index.css';
+import SignupLogin from './pages/SignupLogin';
+import VendorPage from './pages/VendorPage';
+function App(){
 
-function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div>
-      <Navbar />
-      <LoginForm />
-      <LandingPage/>
-  
-    </div>
-  );
-}
-
-export default App;*/
-import About from "./About";
-import "./App.css";
-import Contact from "./Contact";
-import Footer from "./Footer";
-import Home from "./Home";
-import SplashCursor from "./SplashCursor";
-import Testimonial from "./Testimonial";
-import WhatsCooking from "./WhatsCooking";
-import Work from "./Work";
-
-function App() {
-  return (
-    <div className="App">
-      <SplashCursor />
-      <Home />
-      <About />
-      <Work />
-      <WhatsCooking />
-      <Testimonial />
-      <Contact />
-      <Footer />
-    </div>
-  );
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage user={user} />}/>
+        <Route path="/auth" element={<SignupLogin/>} />
+        <Route path="/Vendor" element={<VendorPage/>} />
+      </Routes>
+    </BrowserRouter>
+    
+  )
 }
 
 export default App;
