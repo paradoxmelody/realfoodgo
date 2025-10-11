@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import './App.css';
 import { auth } from './firebase_data/firebase';
 import LandingPage from './pages/LandingPage';
+import MenuPage from './pages/MenuPage';
 import SignupLogin from './pages/SignupLogin';
 import VendorPage from './pages/VendorPage';
 function App(){
@@ -22,11 +23,12 @@ function App(){
       <Routes>
         <Route path="/" element={<LandingPage user={user} />}/>
         <Route path="/auth" element={<SignupLogin/>} />
-        <Route path="/Vendor" element={<VendorPage/>} />
+        <Route path="/vendor" element={<VendorPage/>} />
+        <Route path="/menu/:vendorId" element={<MenuPage /> }/>
       </Routes>
     </BrowserRouter>
     
-  )
+  );
 }
 
 export default App;

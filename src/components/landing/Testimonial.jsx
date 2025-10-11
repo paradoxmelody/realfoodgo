@@ -1,5 +1,5 @@
 import { AiFillStar } from "react-icons/ai";
-import ProfilePic from "../../assets/images/dacarter (3).jpg";
+import ProfilePic from "../../assets/images/OIP (1).JPEG";
 
 const Testimonial = () => {
   return (

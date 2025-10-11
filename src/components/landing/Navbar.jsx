@@ -46,10 +46,12 @@ const Navbar = () => {
     {
       text: "Restaurants",
       icon: <InfoIcon />,
+      action: () => navigate('/vendor')
     },
     {
       text: "Menu",
       icon: <CommentRoundedIcon />,
+      action: () => navigate('/vendor')
     },
     {
       text: "Contact",
@@ -58,6 +60,7 @@ const Navbar = () => {
     {
       text: "Cart",
       icon: <ShoppingCartRoundedIcon />,
+      action: () => navigate('/cart')
     },
   ];
   return (
@@ -67,8 +70,8 @@ const Navbar = () => {
       </div>
       <div className="navbar-links-container">
         <a href="">Home</a>
-        <a href="">Restaurants</a>
-        <a href="">Menu</a>
+        <a onClick={() => navigate('/vendor')}>Restaurants</a>
+        <a onClick={() => navigate('/vendor')}>Menu</a>
         <a href="">Contact</a>
         <button onClick={() => navigate('/cart')} style={{background: 'none', border: 'none', cursor: 'pointer'}}>
           <BsCart2 className="navbar-cart-icon" />

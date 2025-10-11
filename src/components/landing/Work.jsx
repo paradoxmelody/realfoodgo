@@ -1,4 +1,4 @@
-import PickMeals from "../../assets/images/dacarter (1).jpg";
+import PickMeals from "../../assets/images/cutiepatotie.jpg";
 import ChooseMeals from "../../assets/images/fastfoodie.jpeg";
 import DeliveryMeals from "../../assets/images/foodonthetable.jpg";
 

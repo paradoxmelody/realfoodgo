@@ -1,53 +1,78 @@
 import {
-    AppBar,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CardMedia,
-    Chip,
-    Container,
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    Rating,
-    TextField,
-    Toolbar,
-    Typography
+  AppBar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Container,
+  Grid,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Rating,
+  TextField,
+  Toolbar,
+  Typography
 } from '@mui/material';
 import { useState } from 'react';
 import {
-    FaHeart,
-    FaHome,
-    FaRegHeart,
-    FaSearch,
-    FaShoppingCart,
-    FaStore,
-    FaUser,
-    FaUtensils
+  FaHeart,
+  FaHome,
+  FaRegHeart,
+  FaSearch,
+  FaShoppingCart,
+  FaStore,
+  FaUser,
+  FaUtensils
 } from 'react-icons/fa';
 import { MdLocalOffer } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
+import foodgoLogo from './foodgo.png';
 
-// Mock data - replace with Firebase data
+
+// Mock data 
 const mockVendors = [
-  { id: 1, name: 'The Barn', category: 'Fast Food', rating: 4.5, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400', deals: ['Free Pizza Friday'] },
-  { id: 2, name: 'Brewdubs', category: 'Bar', rating: 4.2, image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400', deals: [] },
-  { id: 3, name: 'Dreshaan Home Of Bruwelas', category: 'Cafe', rating: 4.8, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400', deals: [] },
-  { id: 4, name: 'Melody Kitchen', category: 'Restaurant', rating: 4.6, image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400', deals: [] },
-  { id: 5, name: "Kwa Eyethu", category: 'Street Food', rating: 4.9, image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=400', deals: [] },
-  { id: 6, name: 'Vida e cafe', category: 'Snacks', rating: 4.3, image: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=400', deals: [] },
-  { id: 7, name: 'The Chinese House', category: 'Asian', rating: 4.7, image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=400', deals: [] },
-  { id: 8, name: 'Starbucks', category: 'Traditional', rating: 5.0, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400', deals: [] },
+  { id: 1, name: 'The Barn', category: 'Italian, Pizza', rating: 4.8, reviews: 1250, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400' },
+  { id: 2, name: 'Brewdubs', category: 'American, Burgers', rating: 4.5, reviews: 980, image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400' },
+  { id: 3, name: 'Zasembo', category: 'Japanese, Sushi', rating: 4.7, reviews: 720, image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400' },
+  { id: 4, name: "Melody's Kitchen", category: 'Coffee, Pastries, Sandwiches', rating: 4.6, reviews: 1100, image: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400' },
+  { id: 5, name: "Malebaleba's Truck", category: 'Mexican, Tacos', rating: 4.4, reviews: 650, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400' },
+  { id: 6, name: 'Starbucks', category: 'Healthy, Salads', rating: 4.9, reviews: 880, image: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=400' },
+  { id: 7, name: 'The Chinese House', category: 'Asian, Noodles', rating: 4.3, reviews: 520, image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=400' },
+  { id: 8, name: 'Braai and Pap', category: 'Grill, BBQ', rating: 4.6, reviews: 780, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400' },
 ];
 
 const hotDeals = [
-  { id: 1, name: 'Buy 1 Get 1 FREE Pizza', vendor: 'The Barn', image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500', price: 'R245.00', originalPrice: 'R490.00' },
-  { id: 2, name: 'Burger Combo - 20% off', vendor: 'Brewskis', image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500', price: 'R150.00', originalPrice: 'R187.50' },
-  { id: 3, name: 'Breakfast Box Deal - Half Price!', vendor: 'Cavendish', image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500', price: 'R80.00', originalPrice: 'R160.00' },
-  { id: 4, name: 'Sushi & Dessert', vendor: 'The Chinese House', image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=500', price: 'R125.00', originalPrice: 'R200.00' },
+  { 
+    id: 1, 
+    name: 'Pizza Palace', 
+    description: '2-for-1 Large Pizzas!',
+    price: 'R105.99',
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500' 
+  },
+  { 
+    id: 2, 
+    name: 'Burger Haven', 
+    description: 'Mega Burger Combo - 20% Off!',
+    price: 'R199.99',
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500' 
+  },
+  { 
+    id: 3, 
+    name: 'Sushi Spot', 
+    description: 'Sushi Platter for Two - Half Price!',
+    price: 'R240.99',
+    image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=500' 
+  },
+  { 
+    id: 4, 
+    name: 'Campus Cafe', 
+    description: 'Coffee & Pastry',
+    price: 'R55.00',
+    image: 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500' 
+  },
 ];
 
 const VendorsPage = () => {
@@ -55,13 +80,12 @@ const VendorsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [favorites, setFavorites] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const categories = ['All', 'Fast Food', 'Cafe', 'Restaurant', 'Street Food', 'Asian', 'Traditional', 'Halal', 'Vegan'];
+  const categories = ['All', 'Student meals', 'fastfood', 'Japanese', 'Student budget', 'Asian', 'Coffee', 'coffee and dricks'];
 
   const filteredVendors = mockVendors.filter(vendor => {
     const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || vendor.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All' || vendor.category.includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
@@ -76,10 +100,10 @@ const VendorsPage = () => {
   return (
     <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
       {/* Top Navigation */}
-      <AppBar position="sticky" sx={{ bgcolor: 'white', color: 'black', boxShadow: 1 }}>
+      <AppBar position="sticky" sx={{ bgcolor: 'white', color: 'rgba(14, 10, 73, 1)', boxShadow: 1 }}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#ff6b35' }}>
-            FoodGo
+            <img src={foodgoLogo} width={50} height={40} alt="logo"></img>
           </Typography>
           <Button color="inherit" startIcon={<FaHome />}>Home</Button>
           <Button color="inherit" startIcon={<FaStore />} sx={{ bgcolor: '#ff6b35', color: 'white', mx: 1 }}>Vendors</Button>
@@ -104,7 +128,13 @@ const VendorsPage = () => {
             InputProps={{
               startAdornment: <FaSearch style={{ marginRight: 8, color: '#999' }} />
             }}
-            sx={{ bgcolor: 'white', borderRadius: 2 }}
+            sx={{ 
+              bgcolor: 'white', 
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              }
+            }}
           />
         </Box>
 
@@ -116,32 +146,39 @@ const VendorsPage = () => {
           <Grid container spacing={3}>
             {hotDeals.map(deal => (
               <Grid item xs={12} sm={6} md={3} key={deal.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-8px)' } }}>
-                  <CardMedia
-                    component="img"
-                    height="180"
-                    image={deal.image}
-                    alt={deal.name}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Chip label="HOT DEAL" size="small" sx={{ bgcolor: '#ff6b35', color: 'white', mb: 1 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                <Card sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  borderRadius: 3, 
+                  boxShadow: 3, 
+                  transition: 'transform 0.2s', 
+                  '&:hover': { transform: 'translateY(-8px)' },
+                  bgcolor: 'white'
+                }}>
+                  <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.1rem' }}>
                       {deal.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {deal.vendor}
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                      {deal.description}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ff6b35' }}>
-                        {deal.price}
-                      </Typography>
-                      <Typography variant="body2" sx={{ textDecoration: 'line-through', color: '#999' }}>
-                        {deal.originalPrice}
-                      </Typography>
-                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ff6b35', mb: 2 }}>
+                      {deal.price}
+                    </Typography>
                   </CardContent>
-                  <Box sx={{ p: 2 }}>
-                    <Button fullWidth variant="contained" sx={{ bgcolor: '#1a1a1a', '&:hover': { bgcolor: '#333' } }}>
+                  <Box sx={{ p: 2, pt: 0 }}>
+                    <Button 
+                      fullWidth 
+                      variant="contained" 
+                      sx={{ 
+                        bgcolor: '#03032eff', 
+                        borderRadius: 2,
+                        py: 1,
+                        fontWeight: 'bold',
+                        '&:hover': { bgcolor: '#333' } 
+                      }}
+                    >
                       Order Now
                     </Button>
                   </Box>
@@ -152,12 +189,22 @@ const VendorsPage = () => {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 3 }}>
-          {/* Sidebar Categories */}
-          <Box sx={{ width: 250, bgcolor: 'white', p: 3, borderRadius: 2, height: 'fit-content', position: 'sticky', top: 80 }}>
+          {/* Sidebar Categories  */}
+          <Box sx={{ 
+            width: 280, 
+            flexShrink: 0,
+            bgcolor: 'white', 
+            p: 3, 
+            borderRadius: 2, 
+            height: 'fit-content', 
+            position: 'sticky', 
+            top: 80,
+            boxShadow: 1
+          }}>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
               Categories
             </Typography>
-            <List>
+            <List sx={{ py: 0 }}>
               {categories.map(category => (
                 <ListItem
                   button
@@ -167,6 +214,7 @@ const VendorsPage = () => {
                   sx={{
                     borderRadius: 2,
                     mb: 1,
+                    py: 1,
                     '&.Mui-selected': {
                       bgcolor: '#ff6b35',
                       color: 'white',
@@ -174,55 +222,93 @@ const VendorsPage = () => {
                     }
                   }}
                 >
-                  <ListItemText primary={category} />
+                  <ListItemText 
+                    primary={category} 
+                    primaryTypographyProps={{
+                      fontSize: '0.9rem',
+                      fontWeight: selectedCategory === category ? 'bold' : 'normal'
+                    }}
+                  />
                 </ListItem>
               ))}
             </List>
           </Box>
 
           {/* Vendors Grid */}
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>  
             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
               Explore Campus Vendors
             </Typography>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>  
               {filteredVendors.map(vendor => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={vendor.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 2, transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-5px)', boxShadow: 5 } }}>
+                  <Card sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    borderRadius: 2, 
+                    boxShadow: 1, 
+                    transition: 'transform 0.2s', 
+                    '&:hover': { transform: 'translateY(-4px)', boxShadow: 3 },
+                    bgcolor: 'white',
+                    overflow: 'hidden'
+                  }}>
                     <CardMedia
                       component="img"
-                      height="160"
+                      height="120" 
                       image={vendor.image}
                       alt={vendor.name}
                     />
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                    <CardContent sx={{ flexGrow: 1, p: 2, pb: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.95rem' }}>
                         {vendor.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.75rem' }}>
                         {vendor.category}
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Rating value={vendor.rating} precision={0.1} size="small" readOnly />
-                        <Typography variant="body2" sx={{ ml: 1 }}>
-                          {vendor.rating}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                        <Rating 
+                          value={vendor.rating} 
+                          precision={0.1} 
+                          size="small" 
+                          readOnly 
+                          sx={{ fontSize: '0.9rem' }}
+                        />
+                        <Typography variant="body2" sx={{ ml: 1, fontSize: '0.75rem' }}>
+                          {vendor.rating} ({vendor.reviews.toLocaleString()})
                         </Typography>
                       </Box>
                     </CardContent>
-                    <Box sx={{ p: 2, display: 'flex', gap: 1 }}>
+                    <Box sx={{ p: 1.5, display: 'flex', gap: 1, alignItems: 'center' }}>
                       <Button
                         fullWidth
                         variant="contained"
-                        sx={{ bgcolor: '#1a1a1a', '&:hover': { bgcolor: '#333' } }}
+                        size="small"
+                        sx={{ 
+                          bgcolor: '#030227ff', 
+                          borderRadius: 1.5,
+                          py: 0.75,
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          minWidth: 'auto',
+                          '&:hover': { bgcolor: '#333' } 
+                        }}
                         onClick={() => navigate(`/menu/${vendor.id}`)}
                       >
                         View Menu
                       </Button>
                       <IconButton
                         onClick={() => toggleFavorite(vendor.id)}
-                        sx={{ color: favorites.includes(vendor.id) ? '#ff6b35' : '#ccc' }}
+                        sx={{ 
+                          color: favorites.includes(vendor.id) ? '#ff6b35' : '#ccc',
+                          border: '1px solid #eee',
+                          borderRadius: 1.5,
+                          width: 32,
+                          height: 32
+                        }}
+                        size="small"
                       >
-                        {favorites.includes(vendor.id) ? <FaHeart /> : <FaRegHeart />}
+                        {favorites.includes(vendor.id) ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
                       </IconButton>
                     </Box>
                   </Card>
