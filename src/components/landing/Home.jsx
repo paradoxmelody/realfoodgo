@@ -1,6 +1,6 @@
 import { FiArrowRight } from "react-icons/fi";
-//import BannerBackground from "../../assets/images/jbadASS.jpg";
-import BannerImage from "../../assets/images/omshantiom.jpg";
+import BannerBackground from "../../assets/images/jbadASS.jpg";
+//import BannerImage from "../../assets/images/omshantiom.jpg";
 import Navbar from "./Navbar";
 
 const Home = () => {
@@ -8,9 +8,9 @@ const Home = () => {
     <div className="home-container">
       <Navbar />
       <div className="home-banner-container">
-        {/*<div className="home-bannerImage-container">
+        <div className="home-bannerImage-container">
           <img src={BannerBackground} alt="" />
-        </div>*/}
+        </div>
         <div className="home-text-section">
           <h1 className="primary-heading">
             Why wait in line when you can order online and get your food fast?
@@ -22,9 +22,9 @@ const Home = () => {
             Order Now <FiArrowRight />{" "}
           </button>
         </div>
-        <div className="home-image-section">
+        {/*<div className="home-image-section">
           <img src={BannerImage} alt="" />
-        </div>
+        </div>*/}
       </div>
     </div>
   );
