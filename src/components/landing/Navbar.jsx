@@ -53,10 +53,10 @@ const Navbar = () => {
       </div>
       <div className="navbar-links-container">
         <a href="">Home</a>
-        <a onClick={() => navigate('/vendor')}>Restaurants</a>
-        <a onClick={() => navigate('/vendor')}>Menu</a>
-        <a href="">Contact</a>
-        <button onClick={() => navigate('/cart')} style={{background: 'none', border: 'none', cursor: 'pointer'}}>
+        <a href="#" onClick={() => navigate('/vendor')}>Restaurants</a>
+        <a href="#" onClick={() => navigate('/vendor')}>Menu</a>
+        <a href="#">Contact</a>
+        <button onClick={() => navigate('/CartPage')} style={{background: 'none', border: 'none', cursor: 'pointer'}}>
           <BsCart2 className="navbar-cart-icon" />
         </button>
         <button className="primary-button" onClick={() => navigate('/auth')}>Login/Sign Up</button>

@@ -99,7 +99,7 @@ const VendorsPage = () => {
           <Button color="inherit" startIcon={<FaHome />} onClick={() => navigate('/')}>Home</Button>
           <Button color="inherit" startIcon={<FaStore />} sx={{ bgcolor: '#ff6b35', color: 'white', mx: 1 }}>Vendors</Button>
           <Button color="inherit" startIcon={<FaUtensils />} onClick={() => navigate('/vendors')}>Menu</Button>
-          <IconButton color="inherit" onClick={() => navigate('/cart')}>
+          <IconButton color="inherit" onClick={() => navigate('/CartPage')}>
             <FaShoppingCart />
           </IconButton>
           <IconButton color="inherit" onClick={() => navigate('/ProfilePage')}>

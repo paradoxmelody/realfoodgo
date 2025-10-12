@@ -202,7 +202,7 @@ const Menu = () => {
           <Button
             color="inherit"
             startIcon={<FaShoppingCart />}
-            onClick={() => navigate('/cart')}
+            onClick={() => navigate('/CartPage')}
           >
             Cart
           </Button>

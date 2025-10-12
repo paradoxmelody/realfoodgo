@@ -27,12 +27,12 @@ import { FaCamera, FaHeart, FaShoppingCart, FaUser } from 'react-icons/fa';
 import { IoFastFood } from 'react-icons/io5';
 import { MdHistory, MdSearch, MdSettings } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import BlobCursor from '../components/blobcursor/BlobCursor';
+import PixelTrail from '../components/pixeltrail/Pixel';
 import { db, storage } from '../firebase_data/firebase';
 import FoodGoLogo from './foodgo.png';
 
 
-console.log("Blob cursor come on" , BlobCursor);
+ 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({
@@ -143,7 +143,7 @@ const ProfilePage = () => {
 
   return (
   <>
-    <BlobCursor/>
+    <PixelTrail/>
 
     <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh' }}>
       {/* Navigation Bar */}
