@@ -40,6 +40,7 @@ export default LoginForm;
 
 import { useState } from "react";
 import { FaLock, FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../firebase_data/auth"; // ✅ make sure path is correct
 import "./LoginForm.css";
 
@@ -48,6 +49,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Handle login
   const handleSubmit = async (e) => {
@@ -63,7 +65,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
     } else {
       setMessage(result.message);
       // You can redirect user after login here, e.g.:
-      // navigate("/dashboard");
+      navigate("/");
     }
   };
 
