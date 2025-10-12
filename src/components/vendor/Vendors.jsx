@@ -79,7 +79,7 @@ const VendorsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [favorites, setFavorites] = useState([]);
 
-  const categories = ['All', 'Italian', 'American', 'Japanese', 'Mexican', 'Asian', 'Coffee', 'Grill'];
+  const categories = ['All', 'Student Meals', '', 'Healthy', 'Combo Deals', 'Asian', 'Coffee', 'Grill'];
 
   const filteredVendors = mockVendors.filter(vendor => {
     const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -237,11 +237,11 @@ const VendorsPage = () => {
             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
               Explore Campus Vendors
             </Typography>
-            <Grid container spacing={2}> {/* Reduced spacing from 3 to 2 */}
+            <Grid container spacing={2}> 
               {filteredVendors.map(vendor => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={vendor.id}>
                   <Card sx={{ 
-                    height: '100%', 
+                    height: '80%', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     borderRadius: 2, 

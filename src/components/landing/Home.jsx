@@ -1,5 +1,5 @@
 import { FiArrowRight } from "react-icons/fi";
-import BannerBackground from "../../assets/images/jbadASS.jpg";
+//import BannerBackground from "../../assets/images/jbadASS.jpg";
 import BannerImage from "../../assets/images/omshantiom.jpg";
 import Navbar from "./Navbar";
 
@@ -8,9 +8,9 @@ const Home = () => {
     <div className="home-container">
       <Navbar />
       <div className="home-banner-container">
-        <div className="home-bannerImage-container">
+        {/*<div className="home-bannerImage-container">
           <img src={BannerBackground} alt="" />
-        </div>
+        </div>*/}
         <div className="home-text-section">
           <h1 className="primary-heading">
             Why wait in line when you can order online and get your food fast?

@@ -1,9 +1,11 @@
 //import { AwesomeButton } from "react-awesome-button";
 //import 'react-awesome-button/dist/styles.css';
+import { useNavigate } from "react-router-dom";
 import BrowseVendors from "../../assets/images/niontay.jpg";
 import SeeOffers from "../../assets/images/rakai.jpg";
 
 const Work = () => {
+  const navigate = useNavigate();
   const WhatsInfoData = [
     {
       image: BrowseVendors,
@@ -11,14 +13,15 @@ const Work = () => {
       text: "Find your next meal from a diverse selection of campus restaurant.",
       buttonText: "View Restaurants",
       buttonType: "primary",
-      buttonAction: () => console.log("Navigate to restaurants")
+      buttonAction: () => navigate('/vendor')
     },
     {
       image: SeeOffers,
       title: "Hot Deals and Offers",
       text: "Don't miss out on exclusive discounts and daily specials.",
       buttonText: "See Offers",
-      buttonType: "primary"
+      buttonType: "primary",
+      buttonAction : () => navigate('/vendor')
     },
   ];
   return (
@@ -34,7 +37,7 @@ const Work = () => {
             </div>
             <h2>{data.title}</h2>
             <p>{data.text}</p>
-            <button className="primary-button">{data.buttonText}</button>
+            <button className="primary-button" onClick={data.buttonAction}>{data.buttonText}</button>
           </div>
         ))}
       </div>
