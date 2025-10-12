@@ -48,7 +48,7 @@ const Menu = () => {
   const [vendor, setVendor] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Explore Vendors');
+  const [selectedCategory, setSelectedCategory] = useState('Explore Restaurants');
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
@@ -99,7 +99,7 @@ const Menu = () => {
     let filtered = menuItems;
 
     // Filter by category
-    if (selectedCategory !== 'Explore Vendors') {
+    if (selectedCategory !== 'Explore Restaurants') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
@@ -160,13 +160,13 @@ const Menu = () => {
   if (!vendor) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography variant="h5">Vendor not found</Typography>
+        <Typography variant="h5">Restaurant not found</Typography>
       </Box>
     );
   }
 
   // Get unique categories from menu items
-  const categories = ['Explore Vendors', ...new Set(menuItems.map(item => item.category))];
+  const categories = ['Explore Restaurants', ...new Set(menuItems.map(item => item.category))];
 
   // Category icons mapping
   const categoryIcons = {
@@ -194,7 +194,7 @@ const Menu = () => {
             Home
           </Button>
           <Button color="inherit" onClick={() => navigate('/vendor')}>
-            Vendors
+            Restaurants
           </Button>
           <Button color="inherit" sx={{ fontWeight: 'bold' }}>
             Menu
@@ -206,7 +206,7 @@ const Menu = () => {
           >
             Cart
           </Button>
-          <IconButton color="inherit" onClick={() => navigate('/profile')}>
+          <IconButton color="inherit" onClick={() => navigate('/ProfilePage')}>
             <FaUser />
           </IconButton>
         </Toolbar>
@@ -217,7 +217,7 @@ const Menu = () => {
         <Box sx={{ mb: 3 }}>
           <TextField
             fullWidth
-            placeholder="Search for food or vendors..."
+            placeholder="Search for food or restaurants..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -259,7 +259,7 @@ const Menu = () => {
                       }
                     }}
                   >
-                    {category !== 'Explore Vendors' && (
+                    {category !== 'Explore Restaurants' && (
                       <ListItemIcon sx={{ minWidth: 36 }}>
                         {categoryIcons[category] || <MdRestaurant />}
                       </ListItemIcon>

@@ -7,6 +7,7 @@ import MenuPage from './pages/MenuPage';
 import SignupLogin from './pages/SignupLogin';
 import VendorPage from './pages/VendorPage';
 //import MenuPage from '.pages/MenuPage';
+import ProfilePage from './pages/ProfilePage';
 function App(){
 
   const [user, setUser] = useState(null);
@@ -26,6 +27,7 @@ function App(){
         <Route path="/auth" element={<SignupLogin/>} />
         <Route path="/vendor" element={<VendorPage/>} />
         <Route path="/menu/:vendorId" element={<MenuPage /> }/>
+        <Route path="/ProfilePage" element={<ProfilePage/>}/>
       </Routes>
     </BrowserRouter>
     

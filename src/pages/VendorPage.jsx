@@ -58,7 +58,7 @@ const VendorsPage = () => {
       }));
       setVendors(vendorList);
     } catch (error) {
-      console.error('Error fetching vendors:', error);
+      console.error('Error fetching restaurants:', error);
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ const VendorsPage = () => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography variant="h5">Loading vendors...</Typography>
+        <Typography variant="h5">Loading restaurants...</Typography>
       </Box>
     );
   }
@@ -102,7 +102,7 @@ const VendorsPage = () => {
           <IconButton color="inherit" onClick={() => navigate('/cart')}>
             <FaShoppingCart />
           </IconButton>
-          <IconButton color="inherit" onClick={() => navigate('/profile')}>
+          <IconButton color="inherit" onClick={() => navigate('/ProfilePage')}>
             <FaUser />
           </IconButton>
         </Toolbar>
@@ -113,7 +113,7 @@ const VendorsPage = () => {
         <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             fullWidth
-            placeholder="Search for vendors..."
+            placeholder="Search for restaurants..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -242,12 +242,12 @@ const VendorsPage = () => {
           {/* Vendors Grid */}
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>  
             <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-              Explore Campus Vendors
+              Explore Campus Restaurants
             </Typography>
             
             {filteredVendors.length === 0 ? (
               <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
-                No vendors found. Try a different search or category.
+                No Restaurants found. Try a different search or category.
               </Typography>
             ) : (
               <Grid container spacing={2}>  
