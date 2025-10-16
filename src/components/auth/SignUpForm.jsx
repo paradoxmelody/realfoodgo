@@ -36,8 +36,9 @@ export default LoginForm;
 
 import { useState } from "react";
 import { FaLock, FaUser } from "react-icons/fa";
-import { signUpUser } from "../../firebase_data/auth"; //  make sure path is correct
+import { signUpUser } from "../../firebase_data/auth";
 import "./LoginForm.css";
+import { useNavigate } from "react-router-dom";
 
 const SignUpForm = ({ onSwitchToLogin }) => {
   const [email, setEmail] = useState("");
@@ -45,6 +46,7 @@ const SignUpForm = ({ onSwitchToLogin }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate(); // Add navigate here
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -60,12 +62,15 @@ const SignUpForm = ({ onSwitchToLogin }) => {
     try {
       const result = await signUpUser(email, password);
       if (result.error) {
-        setMessage("❌ " + result.error);
+        setMessage(result.error);
       } else {
-        setMessage("✅ " + result.message);
+        setMessage(result.message);
+
+        //  Redirect to vendor page after successful signup
+        setTimeout(() => navigate("/vendor"), 1000);
       }
     } catch (err) {
-      setMessage("❌ " + err.message);
+      setMessage(err.message);
     }
 
     setLoading(false);
@@ -74,8 +79,7 @@ const SignUpForm = ({ onSwitchToLogin }) => {
   return (
     <div className="wrapper">
       <form onSubmit={handleSignUp}>
-        {/* Placeholder instead of image */}
-        <h1>🍔 FoodGo — Sign Up</h1>
+        <h1> FoodGo — Sign Up</h1>
 
         <div className="input-box">
           <input

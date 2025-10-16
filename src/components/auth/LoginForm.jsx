@@ -41,7 +41,7 @@ export default LoginForm;
 import { useState } from "react";
 import { FaLock, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../../firebase_data/auth"; // ✅ make sure path is correct
+import { loginUser } from "../../firebase_data/auth"; 
 import "./LoginForm.css";
 
 const LoginForm = ({ onSwitchToSignup }) => {
@@ -64,15 +64,16 @@ const LoginForm = ({ onSwitchToSignup }) => {
       setMessage(result.error);
     } else {
       setMessage(result.message);
-      // You can redirect user after login here, e.g.:
-      navigate("/");
+
+      // Redirect to vendor page after successful login
+      setTimeout(() => navigate("/vendor"), 1000);
     }
   };
 
   return (
     <div className="wrapper">
       <form onSubmit={handleSubmit}>
-        <h1>FoodGo</h1>
+        <h1>FoodGo — Login</h1>
 
         <div className="input-box">
           <input

@@ -1,4 +1,4 @@
-// src/firebase/auth.js
+// src/firebase_data/auth.js
 
 import {
   createUserWithEmailAndPassword,
@@ -66,8 +66,9 @@ export const getCurrentUser = () => {
 export const requireAuth = async (navigate) => {
   const user = await getCurrentUser();
   if (!user) {
-    navigate("/auth"); // make sure your route path matches
+    navigate("/auth"); // redirect to login/signup if not authenticated
     return null;
   }
   return user;
 };
+
