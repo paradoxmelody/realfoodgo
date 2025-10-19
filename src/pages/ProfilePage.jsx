@@ -1,129 +1,96 @@
+import React, { useState, useEffect } from 'react';
 import {
-  AppBar,
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography
-} from '@mui/material';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { useEffect, useState } from 'react';
-import { FaCamera, FaHeart, FaShoppingCart, FaUser } from 'react-icons/fa';
-import { IoFastFood } from 'react-icons/io5';
-import { MdHistory, MdSearch, MdSettings } from 'react-icons/md';
+  ShoppingCart,
+  User,
+  Heart,
+  Wallet,
+  Edit,
+  Camera,
+  Mail,
+  Phone,
+  Save,
+  X,
+  Settings,
+  HelpCircle,
+  CreditCard,
+  MapPin,
+  Bell,
+  Lock,
+  LogOut,
+  FileText,
+  MessageSquare,
+  Home,
+  Store,
+  Search,
+  Eye
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import PixelTrail from '../components/pixeltrail/Pixel';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase_data/firebase';
-import FoodGoLogo from './foodgo.png';
+import foodgoLogo from './foodgo.png';
+import './ProfilePage.css';
 
-
- 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
   const [user, setUser] = useState({
     name: 'Moloti Kgaphola',
     email: '4356470@myuwc.ac.za',
     phone: '087 346 2234',
     avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
   });
-  const [editMode, setEditMode] = useState(false);
   const [tempUser, setTempUser] = useState(user);
-  const [imageUploadOpen, setImageUploadOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const orders = [
-    { id: 'FG001001', date: '2023-11-20', vendor: 'Campus Grill', total: 'R24.50', status: 'Delivered' },
-    { id: 'FG001002', date: '2023-11-18', vendor: 'Pizza Place', total: 'R30.00', status: 'Delivered' },
-    { id: 'FG001003', date: '2023-11-15', vendor: 'Sushi Express', total: 'R18.75', status: 'Processing' },
-    { id: 'FG001004', date: '2023-11-12', vendor: 'The Salad Bar', total: 'R15.00', status: 'Delivered' },
-    { id: 'FG001005', date: '2023-11-09', vendor: 'Coffee & Bites', total: 'R9.25', status: 'Cancelled' },
-    { id: 'FG001006', date: '2023-11-05', vendor: 'Burger Junction', total: 'R28.00', status: 'Delivered' }
+    { id: 'FG001001', date: '2023-11-20', vendor: 'Campus Grill', total: 'R24.50', status: 'Delivered', items: 3 },
+    { id: 'FG001002', date: '2023-11-18', vendor: 'Pizza Place', total: 'R30.00', status: 'Delivered', items: 2 },
+    { id: 'FG001003', date: '2023-11-15', vendor: 'Sushi Express', total: 'R18.75', status: 'Processing', items: 1 },
   ];
 
-  const categories = [
-    { name: 'Pizza', icon: '🍕' },
-    { name: 'Burgers', icon: '🍔' },
-    { name: 'Salads', icon: '🥗' },
-    { name: 'Desserts', icon: '🍰' }
+  const stats = [
+    { label: 'Orders', value: '6', icon: <ShoppingCart size={20} />, color: '#16a34a' },
+    { label: 'Favorites', value: '12', icon: <Heart size={20} />, color: '#ff6b35' },
+    { label: 'Total Spent', value: 'R125.50', icon: <Wallet size={20} />, color: '#f59e0b' }
   ];
 
-  // Fetch user data from Firebase
+  const settingsMenu = [
+    { label: 'Personal Settings', icon: <User size={20} />, color: '#16a34a', action: () => alert('Personal Settings') },
+    { label: 'Payment Methods', icon: <CreditCard size={20} />, color: '#3b82f6', action: () => alert('Payment Methods') },
+    { label: 'Saved Addresses', icon: <MapPin size={20} />, color: '#f59e0b', action: () => alert('Saved Addresses') },
+    { label: 'Notifications', icon: <Bell size={20} />, color: '#ec4899', action: () => alert('Notifications') },
+    { label: 'Security & Privacy', icon: <Lock size={20} />, color: '#8b5cf6', action: () => alert('Security & Privacy') },
+    { label: 'Help & Support', icon: <HelpCircle size={20} />, color: '#06b6d4', action: () => alert('Help & Support') },
+    { label: 'Contact Us', icon: <MessageSquare size={20} />, color: '#f97316', action: () => alert('Contact Us') },
+    { label: 'Terms & Conditions', icon: <FileText size={20} />, color: '#64748b', action: () => alert('Terms & Conditions') },
+    { label: 'Logout', icon: <LogOut size={20} />, color: '#ef4444', action: () => navigate('/auth') }
+  ];
+
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setUser(userData);
+          setTempUser(userData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
     fetchUserData();
   }, []);
 
-  const fetchUserData = async () => {
-    try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1'; 
-      const userRef = doc(db, 'users', userId);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        setUser(userData);
-        setTempUser(userData);
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  // Handle image upload to Firebase Storage
-  const handleImageUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1'; 
-      const storageRef = ref(storage, `profile_images/${userId}/${file.name}`);
-      
-      // Upload to Firebase Storage
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-
-      // Update Firestore with new image URL
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { avatar: downloadURL });
-
-      // Update local state
-      setUser(prev => ({ ...prev, avatar: downloadURL }));
-      setImageUploadOpen(false);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Handle profile update
   const handleSaveProfile = async () => {
     try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1'; 
+      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
       const userRef = doc(db, 'users', userId);
-      
-      await updateDoc(userRef, {
-        name: tempUser.name,
-        phone: tempUser.phone,
-        email: tempUser.email
-      });
-
+      await updateDoc(userRef, { ...tempUser });
       setUser(tempUser);
       setEditMode(false);
     } catch (error) {
@@ -132,448 +99,438 @@ const ProfilePage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Delivered': return '#FF6B35';
-      case 'Processing': return '#666';
-      case 'Cancelled': return '#F44336';
-      default: return '#2196F3';
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
+      const storageRef = ref(storage, `profile_images/${userId}/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, { avatar: downloadURL });
+      setUser((prev) => ({ ...prev, avatar: downloadURL }));
+    } catch (error) {
+      console.error(error);
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-  <>
-    <PixelTrail/>
+    <div className="profile-container" style={{ overflowX: 'hidden' }}>
+      {/* Custom Navbar */}
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        padding: '1rem 5%',
+        background: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        zIndex: 100,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <img src={foodgoLogo} width={50} height={40} alt="logo" />
+          </div>
 
-    <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Navigation Bar */}
-      <AppBar position="static" sx={{ bgcolor: 'white', color: 'darkblue', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <Container maxWidth="xl">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5 }}>
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontWeight: 'bold', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 0.5,
-                cursor: 'pointer'
-              }}
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <button
               onClick={() => navigate('/')}
-            >
-              <img src={FoodGoLogo} width={40} height={50} alt='unfair'></img>
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              <Button 
-                color="inherit" 
-                sx={{ textTransform: 'none', fontWeight: 500 }}
-                onClick={() => navigate('/')}
-              >
-                Home
-              </Button>
-              <Button 
-                color="inherit" 
-                sx={{ textTransform: 'none', fontWeight: 500 }}
-                onClick={() => navigate('/vendors')}
-              >
-                Restaurants
-              </Button>
-              <Button 
-                color="inherit" 
-                sx={{ textTransform: 'none', fontWeight: 500 }}
-                onClick={() => navigate('/menu')}
-              >
-                Menu
-              </Button>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <TextField
-                placeholder="Search for food or restaurants..."
-                size="small"
-                sx={{ 
-                  width: 250,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    bgcolor: '#f5f5f5'
-                  }
-                }}
-                InputProps={{
-                  startAdornment: <MdSearch style={{ marginRight: 8, color: '#666' }} />
-                }}
-              />
-              <IconButton onClick={() => navigate('/cart')}>
-                <FaShoppingCart />
-              </IconButton>
-              <Button 
-                variant="text" 
-                sx={{ textTransform: 'none', color: 'darkblue', fontWeight: 500 }}
-                startIcon={<FaUser />}
-                onClick={() => navigate('/profile')}
-              >
-                Profile
-              </Button>
-            </Box>
-          </Box>
-        </Container>
-      </AppBar>
-
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', gap: 3 }}>
-          {/* Sidebar */}
-          <Paper sx={{ width: 250, height: 'fit-content', p: 2, position: 'relative', minHeight: 400 }}>
-            <Typography variant="subtitle2" sx={{ color: '#666', mb: 2, fontWeight: 600 }}>
-              CATEGORIES
-            </Typography>
-            
-            {categories.map((category) => (
-              <Box 
-                key={category.name}
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1.5, 
-                  py: 1.5,
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: '#f5f5f5' },
-                  borderRadius: 1,
-                  px: 1
-                }}
-                onClick={() => navigate(`/category/${category.name.toLowerCase()}`)}
-              >
-                <IoFastFood style={{ color: '#666' }} />
-                <Typography variant="body2">{category.name}</Typography>
-              </Box>
-            ))}
-
-            <Typography variant="subtitle2" sx={{ color: '#666', mb: 2, mt: 4, fontWeight: 600 }}>
-              QUICK ACTIONS
-            </Typography>
-            
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1.5, 
-                py: 1.5,
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#1f2937',
+                fontSize: '0.95rem',
+                fontWeight: 500,
                 cursor: 'pointer',
-                '&:hover': { bgcolor: '#f5f5f5' },
-                borderRadius: 1,
-                px: 1
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                transition: 'all 0.2s ease'
               }}
-              onClick={() => navigate('/favorites')}
+              onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
+              onMouseLeave={(e) => e.target.style.background = 'none'}
             >
-              <FaHeart style={{ color: '#666' }} />
-              <Typography variant="body2">Favorites</Typography>
-            </Box>
+              <Home size={20} />
+              Home
+            </button>
 
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1.5, 
-                py: 1.5,
+            <button
+              onClick={() => navigate('/vendors')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#1f2937',
+                fontSize: '0.95rem',
+                fontWeight: 500,
                 cursor: 'pointer',
-                color: '#FF6B35',
-                borderRadius: 1,
-                px: 1,
-                bgcolor: '#fff5f2'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                transition: 'all 0.2s ease'
               }}
+              onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
+              onMouseLeave={(e) => e.target.style.background = 'none'}
             >
-              <MdHistory style={{ color: '#FF6B35' }} />
-              <Typography variant="body2" sx={{ color: '#FF6B35', fontWeight: 600 }}>Order History</Typography>
-            </Box>
+              <Store size={20} />
+              Vendors
+            </button>
+          </div>
+        </div>
 
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1.5, 
-                py: 1.5,
-                cursor: 'pointer',
-                borderRadius: 1,
-                px: 1,
-                position: 'absolute',
-                bottom: 20,
-                width: 'calc(100% - 16px)',
-                '&:hover': { bgcolor: '#f5f5f5' }
-              }}
-              onClick={() => navigate('/settings')}
-            >
-              <MdSettings style={{ color: '#666' }} />
-              <Typography variant="body2">Settings</Typography>
-            </Box>
-          </Paper>
-
-          {/* Main Content */}
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-              User Profile & Order History
-            </Typography>
-
-            {/* User Profile Section */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
-                <Box sx={{ position: 'relative' }}>
-                  <Avatar 
-                    src={user.avatar}
-                    sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                    onClick={() => setImageUploadOpen(true)}
-                  />
-                  <IconButton
-                    sx={{
-                      position: 'absolute',
-                      bottom: 2,
-                      right: 2,
-                      width: 24,
-                      height: 24,
-                      bgcolor: '#FF6B35',
-                      color: 'white',
-                      '&:hover': { bgcolor: '#e55a2b' }
-                    }}
-                    onClick={() => setImageUploadOpen(true)}
-                  >
-                    <FaCamera size={12} />
-                  </IconButton>
-                </Box>
-
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        {editMode ? (
-                          <TextField
-                            value={tempUser.name}
-                            onChange={(e) => setTempUser({...tempUser, name: e.target.value})}
-                            size="small"
-                            sx={{ width: 300 }}
-                          />
-                        ) : (
-                          user.name
-                        )}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {user.email}
-                      </Typography>
-                    </Box>
-                    <Button 
-                      variant="outlined" 
-                      sx={{ 
-                        textTransform: 'none',
-                        borderColor: '#ddd',
-                        color: 'black',
-                        '&:hover': {
-                          borderColor: '#ccc',
-                          bgcolor: '#f5f5f5'
-                        }
-                      }}
-                      onClick={() => {
-                        if (editMode) {
-                          handleSaveProfile();
-                        } else {
-                          setEditMode(true);
-                        }
-                      }}
-                    >
-                      {editMode ? 'Save Profile' : 'Edit Profile'}
-                    </Button>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 4, mt: 3 }}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        Name
-                      </Typography>
-                      <TextField 
-                        value={editMode ? tempUser.name : user.name}
-                        onChange={(e) => setTempUser({...tempUser, name: e.target.value})}
-                        size="small"
-                        sx={{ mt: 0.5, width: 220 }}
-                        InputProps={{
-                          sx: { borderRadius: 1 },
-                          readOnly: !editMode
-                        }}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        Email
-                      </Typography>
-                      <TextField 
-                        value={editMode ? tempUser.email : user.email}
-                        onChange={(e) => setTempUser({...tempUser, email: e.target.value})}
-                        size="small"
-                        sx={{ mt: 0.5, width: 220 }}
-                        InputProps={{
-                          sx: { borderRadius: 1 },
-                          readOnly: !editMode
-                        }}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        Phone
-                      </Typography>
-                      <TextField 
-                        value={editMode ? tempUser.phone : user.phone}
-                        onChange={(e) => setTempUser({...tempUser, phone: e.target.value})}
-                        size="small"
-                        sx={{ mt: 0.5, width: 220 }}
-                        InputProps={{
-                          sx: { borderRadius: 1 },
-                          readOnly: !editMode
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  {editMode && (
-                    <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-                      <Button
-                        variant="contained"
-                        onClick={handleSaveProfile}
-                        sx={{
-                          bgcolor: '#FF6B35',
-                          '&:hover': { bgcolor: '#e55a2b' }
-                        }}
-                      >
-                        Save Changes
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={() => {
-                          setEditMode(false);
-                          setTempUser(user);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Order History Section */}
-            <Paper>
-              <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider' }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Order History
-                </Typography>
-              </Box>
-
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#fafafa' }}>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}>Order ID</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}>Vendor</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}>Total</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#666' }}></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id} sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
-                        <TableCell sx={{ fontWeight: 600 }}>{order.id}</TableCell>
-                        <TableCell>{order.date}</TableCell>
-                        <TableCell>{order.vendor}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{order.total}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={order.status} 
-                            size="small"
-                            sx={{ 
-                              bgcolor: order.status === 'Processing' ? '#f5f5f5' : getStatusColor(order.status),
-                              color: order.status === 'Processing' ? '#666' : 'white',
-                              fontWeight: 600,
-                              fontSize: '0.75rem',
-                              borderRadius: 1.5
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="text" 
-                            size="small"
-                            sx={{ 
-                              color: '#FF6B35',
-                              textTransform: 'none',
-                              minWidth: 'auto',
-                              fontWeight: 600,
-                              '&:hover': {
-                                bgcolor: '#fff5f2'
-                              }
-                            }}
-                          >
-                            Reorder
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Box>
-        </Box>
-
-        {/* Footer */}
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 3, pb: 3 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
-            Company
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
-            Resources
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
-            Legal
-          </Typography>
-        </Box>
-      </Container>
-
-      {/* Image Upload Dialog */}
-      <Dialog open={imageUploadOpen} onClose={() => setImageUploadOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Upload Profile Picture
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ textAlign: 'center', py: 2 }}>
+        {/* Search Bar */}
+        <div style={{
+          flexGrow: 1,
+          maxWidth: '500px',
+          margin: '0 2rem'
+        }}>
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            background: '#f9fafb',
+            borderRadius: '1.5rem',
+            padding: '0.6rem 1rem',
+            border: '2px solid transparent',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.border = '2px solid #16a34a';
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22, 163, 74, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.border = '2px solid transparent';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.border = '2px solid #16a34a';
+            e.currentTarget.style.boxShadow = '0 0 0 4px rgba(22, 163, 74, 0.2)';
+            e.currentTarget.style.background = 'white';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.border = '2px solid transparent';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.background = '#f9fafb';
+          }}
+          >
+            <Search size={18} style={{ color: '#9ca3af', marginRight: '0.5rem' }} />
             <input
-              accept="image/*"
-              style={{ display: 'none' }}
-              id="profile-image-upload"
-              type="file"
-              onChange={handleImageUpload}
+              type="text"
+              placeholder="Search restaurants..."
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: '0.9rem',
+                width: '100%',
+                color: '#1f2937'
+              }}
             />
-            <label htmlFor="profile-image-upload">
-              <Button
-                variant="contained"
-                component="span"
-                startIcon={<FaCamera />}
-                disabled={uploading}
-                sx={{
-                  bgcolor: '#FF6B35',
-                  '&:hover': { bgcolor: '#e55a2b' }
-                }}
-              >
-                {uploading ? 'Uploading...' : 'Choose Image'}
-              </Button>
-            </label>
-            <Typography variant="caption" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
-              JPG, PNG, GIF • Max 5MB
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImageUploadOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-    </>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button
+            onClick={() => navigate('/CartPage')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1f2937',
+              cursor: 'pointer',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.background = 'none'}
+          >
+            <ShoppingCart size={20} />
+            Cart
+          </button>
+
+          <button
+            onClick={() => alert('Help & Support')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1f2937',
+              cursor: 'pointer',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
+            onMouseLeave={(e) => e.target.style.background = 'none'}
+          >
+            <HelpCircle size={20} />
+            Help
+          </button>
+
+          <button
+            style={{
+              background: '#16a34a',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = '#15803d'}
+            onMouseLeave={(e) => e.target.style.background = '#16a34a'}
+          >
+            <User size={20} />
+            {user.name.split(' ')[0]}
+          </button>
+        </div>
+      </nav>
+
+      <main className="profile-main" style={{
+        marginTop: '80px',
+        paddingTop: '2rem',
+        minHeight: 'calc(100vh - 80px)',
+        overflowY: 'auto'
+      }}>
+        {/* Tabs */}
+        <div className="profile-tabs">
+          <button
+            className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Eye size={18} />
+            Overview
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Settings size={18} />
+            Settings
+          </button>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Avatar Section */}
+            <div className="profile-avatar-section">
+              <div className="profile-avatar-wrapper" style={{
+                position: 'relative',
+                width: '150px',
+                height: '150px',
+                margin: '0 auto'
+              }}>
+                <img
+                  src={user.avatar}
+                  alt="Profile"
+                  className="profile-avatar"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    border: '4px solid #16a34a'
+                  }}
+                />
+                <button
+                  className="profile-camera-btn"
+                  onClick={() => document.getElementById('file-input').click()}
+                  title="Change Avatar"
+                  style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    right: '10px',
+                    background: '#16a34a',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#15803d';
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#16a34a';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  <Camera size={18} />
+                </button>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div className="profile-user-info">
+              <h2 className="profile-username">{user.name}</h2>
+              <p className="profile-member-since">Member since November 2023</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="profile-stats">
+              {stats.map((stat, idx) => (
+                <div key={idx} className="stat-card" style={{ borderTopColor: stat.color }}>
+                  <div style={{ color: stat.color, display: 'flex', alignItems: 'center' }}>
+                    {stat.icon}
+                  </div>
+                  <div className="stat-content">
+                    <p className="stat-value">{stat.value}</p>
+                    <p className="stat-label">{stat.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Personal Information Section */}
+            <div className="profile-section">
+              <div className="section-header">
+                <h3 className="section-title">Personal Information</h3>
+                {!editMode && (
+                  <button
+                    className="edit-btn"
+                    onClick={() => setEditMode(true)}
+                  >
+                    <Edit size={16} /> Edit
+                  </button>
+                )}
+              </div>
+
+              <div className="info-fields">
+                {[
+                  { label: 'Full Name', value: tempUser.name, key: 'name', icon: <User size={18} /> },
+                  { label: 'Email Address', value: tempUser.email, key: 'email', icon: <Mail size={18} /> },
+                  { label: 'Phone Number', value: tempUser.phone, key: 'phone', icon: <Phone size={18} /> }
+                ].map((field) => (
+                  <div key={field.key} className="info-field">
+                    <div className="field-label">
+                      <span style={{ color: '#16a34a' }}>{field.icon}</span>
+                      <label>{field.label}</label>
+                    </div>
+                    {editMode ? (
+                      <input
+                        type="text"
+                        value={tempUser[field.key]}
+                        onChange={(e) => setTempUser({ ...tempUser, [field.key]: e.target.value })}
+                        className="field-input"
+                      />
+                    ) : (
+                      <p className="field-value">{user[field.key]}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {editMode && (
+                <div className="edit-actions">
+                  <button className="btn-save" onClick={handleSaveProfile}>
+                    <Save size={16} /> Save Changes
+                  </button>
+                  <button
+                    className="btn-cancel"
+                    onClick={() => { setEditMode(false); setTempUser(user); }}
+                  >
+                    <X size={16} /> Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Recent Orders Section */}
+            <div className="profile-section">
+              <h3 className="section-title">Recent Orders</h3>
+              <div className="orders-list">
+                {orders.map((order) => (
+                  <div key={order.id} className="order-card">
+                    <div className="order-header">
+                      <div>
+                        <p className="order-vendor">{order.vendor}</p>
+                        <p className="order-id">Order #{order.id}</p>
+                      </div>
+                      <span className={`order-status status-${order.status.toLowerCase()}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <div className="order-footer">
+                      <span className="order-items">{order.items} items</span>
+                      <span className="order-total">{order.total}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="settings-section">
+            <h2 className="settings-title">Settings</h2>
+            <div className="settings-menu">
+              {settingsMenu.map((item, idx) => (
+                <button
+                  key={idx}
+                  className="settings-item"
+                  onClick={item.action}
+                  style={{ borderLeftColor: item.color }}
+                >
+                  <div className="settings-icon" style={{ color: item.color }}>
+                    {item.icon}
+                  </div>
+                  <span className="settings-label">{item.label}</span>
+                  <span className="settings-arrow">›</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Spacer */}
+        <div style={{ height: '2rem' }}></div>
+      </main>
+    </div>
   );
 };
 

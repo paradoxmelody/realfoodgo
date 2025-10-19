@@ -9,11 +9,6 @@ import {
   Container,
   Grid,
   IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Rating,
   TextField,
   Toolbar,
@@ -22,12 +17,14 @@ import {
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-  FaClock,
   FaHeart,
+  FaHome,
   FaRegHeart,
   FaSearch,
   FaShoppingCart,
-  FaUser
+  FaStore,
+  FaUser,
+  FaUtensils
 } from 'react-icons/fa';
 import {
   MdCoffee,
@@ -40,34 +37,30 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../firebase_data/firebase';
 import foodgoLogo from './foodgo.png';
-//import './Menu.css';
 
 const Menu = () => {
-  const { vendorId } = useParams(); 
+  const { vendorId } = useParams();
   const navigate = useNavigate();
   const [vendor, setVendor] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Explore Restaurants');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('rating');
 
-  // Fetch vendor and menu items
   useEffect(() => {
     fetchVendorAndMenu();
   }, [vendorId]);
 
-  // Filter items when category or search changes
   useEffect(() => {
     filterMenuItems();
   }, [menuItems, selectedCategory, searchQuery, sortBy]);
 
   async function fetchVendorAndMenu() {
     try {
-      // Fetch vendor info
       const vendorRef = doc(db, 'vendors', vendorId);
       const vendorSnap = await getDoc(vendorRef);
 
@@ -75,7 +68,6 @@ const Menu = () => {
         setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
       }
 
-      // Fetch menu items for this vendor
       const menuQuery = query(
         collection(db, 'menu_items'),
         where('vendorId', '==', vendorId)
@@ -98,12 +90,10 @@ const Menu = () => {
   function filterMenuItems() {
     let filtered = menuItems;
 
-    // Filter by category
-    if (selectedCategory !== 'Explore Restaurants') {
+    if (selectedCategory !== 'All') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,7 +101,6 @@ const Menu = () => {
       );
     }
 
-    // Sort items
     if (sortBy === 'rating') {
       filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
     } else if (sortBy === 'price-low') {
@@ -144,31 +133,27 @@ const Menu = () => {
       setCart([...cart, { ...item, quantity: 1 }]);
     }
 
-    // ama make ts look sexy fr
-
     alert(`${item.name} added to cart!`);
   }
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography variant="h5">Loading menu...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f0fdf4' }}>
+        <Typography variant="h5" sx={{ color: '#166534' }}>Loading menu...</Typography>
       </Box>
     );
   }
 
   if (!vendor) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography variant="h5">Restaurant not found</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f0fdf4' }}>
+        <Typography variant="h5" sx={{ color: '#166534' }}>Restaurant not found</Typography>
       </Box>
     );
   }
 
-  // Get unique categories from menu items
-  const categories = ['Explore Restaurants', ...new Set(menuItems.map(item => item.category))];
+  const categories = ['All', ...new Set(menuItems.map(item => item.category))];
 
-  // Category icons mapping
   const categoryIcons = {
     'Pizza': <MdLocalPizza />,
     'Burgers': <MdFastfood />,
@@ -178,260 +163,339 @@ const Menu = () => {
     'Snacks': <MdFastfood />
   };
 
+  const categoryColors = {
+    'Pizza': '#f97316',
+    'Burgers': '#22c55e',
+    'Salads': '#16a34a',
+    'Coffee': '#fb923c',
+    'Desserts': '#ec4899',
+    'Snacks': '#f59e0b'
+  };
+
   return (
-    <Box sx={{ bgcolor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Top Navigation */}
-      <AppBar position="sticky" sx={{ bgcolor: 'white', color: 'blue', boxShadow: '0 2px 4px rgba(3, 2, 26, 0.1)' }}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            sx={{ flexGrow: 1, fontWeight: 'bold', color: '#ff6b35', cursor: 'pointer' }}
-            onClick={() => navigate('/')}
-          >
-            <img src={foodgoLogo} width={50} height={40} alt='rocky'></img>
-          </Typography>
-          <Button color="inherit" onClick={() => navigate('/')}>
+    <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
+      {/* Top Navigation with Search */}
+      <AppBar position="sticky" sx={{ bgcolor: 'white', color: '#1f2937', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <Toolbar sx={{ gap: 2 }}>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <img src={foodgoLogo} width={50} height={40} alt="logo" />
+          </Box>
+
+          <Button color="inherit" startIcon={<FaHome />} onClick={() => navigate('/')} sx={{ color: '#1f2937' }}>
             Home
           </Button>
-          <Button color="inherit" onClick={() => navigate('/vendor')}>
+          <Button color="inherit" startIcon={<FaStore />} onClick={() => navigate('/vendor')} sx={{ color: '#1f2937' }}>
             Restaurants
-          </Button>
-          <Button color="inherit" sx={{ fontWeight: 'bold' }}>
-            Menu
           </Button>
           <Button
             color="inherit"
-            startIcon={<FaShoppingCart />}
-            onClick={() => navigate('/CartPage')}
+            startIcon={<FaUtensils />}
+            sx={{
+              bgcolor: '#16a34a',
+              color: 'white',
+              '&:hover': { bgcolor: '#15803d' },
+              borderRadius: 2,
+              px: 2
+            }}
           >
-            Cart
+            Menu
           </Button>
-          <IconButton color="inherit" onClick={() => navigate('/ProfilePage')}>
-            <FaUser />
-          </IconButton>
+
+          {/* Search Bar in Center */}
+          <TextField
+            placeholder="Search menu items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            InputProps={{
+              startAdornment: <FaSearch style={{ marginRight: 8, color: '#9ca3af' }} />
+            }}
+            sx={{
+              flexGrow: 1,
+              maxWidth: 500,
+              bgcolor: '#f9fafb',
+              borderRadius: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                '& fieldset': { border: 'none' }
+              }
+            }}
+          />
+
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <IconButton color="inherit" onClick={() => navigate('/CartPage')} sx={{ color: '#1f2937' }}>
+              <FaShoppingCart />
+            </IconButton>
+            <IconButton color="inherit" onClick={() => navigate('/ProfilePage')} sx={{ color: '#1f2937' }}>
+              <FaUser />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Search Bar */}
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            placeholder="Search for food or restaurants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: <FaSearch style={{ marginRight: 8, color: '#999' }} />
-            }}
-            sx={{ bgcolor: 'white', borderRadius: 2 }}
-          />
-        </Box>
-
-        <Box sx={{ display: 'flex', gap: 3 }}>
-          {/* Sidebar - Categories */}
-          <Box
-            sx={{
-              width: 240,
-              bgcolor: 'white',
-              borderRadius: 2,
-              p: 2,
-              height: 'fit-content',
-              position: 'sticky',
-              top: 80,
-              boxShadow: '0 2px 8px rgba(4, 3, 31, 0.08)'
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, textTransform: 'uppercase', fontSize: '0.9rem' }}>
-              Categories
-            </Typography>
-            <List disablePadding>
-              {categories.map(category => (
-                <ListItem key={category} disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    selected={selectedCategory === category}
-                    onClick={() => setSelectedCategory(category)}
-                    sx={{
-                      borderRadius: 1,
-                      '&.Mui-selected': {
-                        bgcolor: '#f0f0f0',
-                        fontWeight: 'bold',
-                        '&:hover': { bgcolor: '#e8e8e8' }
-                      }
-                    }}
-                  >
-                    {category !== 'Explore Restaurants' && (
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        {categoryIcons[category] || <MdRestaurant />}
-                      </ListItemIcon>
-                    )}
-                    <ListItemText
-                      primary={category}
-                      primaryTypographyProps={{ fontSize: '0.9rem' }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-
-            <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 3, mb: 2, textTransform: 'uppercase', fontSize: '0.9rem' }}>
-              Quick Actions
-            </Typography>
-            <List disablePadding>
-              <ListItem disablePadding sx={{ mb: 0.5 }}>
-                <ListItemButton sx={{ borderRadius: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <FaHeart color="#ff6b35" />
-                  </ListItemIcon>
-                  <ListItemText primary="Favorites" primaryTypographyProps={{ fontSize: '0.9rem' }} />
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton sx={{ borderRadius: 1 }}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <FaClock color="#ff6b35" />
-                  </ListItemIcon>
-                  <ListItemText primary="Order History" primaryTypographyProps={{ fontSize: '0.9rem' }} />
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Box>
-
-          {/* Main Content - Menu Items */}
-          <Box sx={{ flexGrow: 1 }}>
-            {/* Vendor Header */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-                {vendor.name} Menu
+        {/* Restaurant Header */}
+        <Box sx={{
+          mb: 4,
+          p: 4,
+          bgcolor: 'white',
+          borderRadius: 3,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.05) 0%, rgba(249, 115, 22, 0.05) 100%)',
+          border: '1px solid #dcfce7'
+        }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2, color: '#166534' }}>
+            {vendor.name}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Chip
+              label={vendor.category}
+              sx={{
+                bgcolor: '#16a34a',
+                color: 'white',
+                fontWeight: 600
+              }}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Rating value={vendor.rating || 0} precision={0.1} size="small" readOnly />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                {vendor.rating || 'N/A'} rating
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Chip label={vendor.category} size="small" />
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Rating value={vendor.rating || 0} precision={0.1} size="small" readOnly />
-                  <Typography variant="body2" sx={{ ml: 0.5 }}>
-                    {vendor.rating || 'N/A'}
-                  </Typography>
-                </Box>
-              </Box>
             </Box>
-
-            {/* Sort By */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                {filteredItems.length} items found
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2">Sort By:</Typography>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={{
-                    padding: '6px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="rating">Rating</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </select>
-              </Box>
-            </Box>
-
-            {/* Menu Items Grid */}
-            {filteredItems.length === 0 ? (
-              <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', py: 8 }}>
-                No menu items found
-              </Typography>
-            ) : (
-              <Grid container spacing={3}>
-                {filteredItems.map(item => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderRadius: 2,
-                        boxShadow: '0 2px 8px rgba(3, 2, 22, 0.08)',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 4px 12px rgba(3, 3, 24, 0.15)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ position: 'relative' }}>
-                        <CardMedia
-                          component="img"
-                          height="180"
-                          image={item.image || 'https://via.placeholder.com/400x300'}
-                          alt={item.name}
-                        />
-                        <IconButton
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            bgcolor: 'white',
-                            '&:hover': { bgcolor: '#f5f5f5' }
-                          }}
-                          onClick={() => toggleFavorite(item.id)}
-                        >
-                          {favorites.includes(item.id) ? (
-                            <FaHeart color="#ff6b35" />
-                          ) : (
-                            <FaRegHeart />
-                          )}
-                        </IconButton>
-                      </Box>
-                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 0.5 }}>
-                          {item.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                          {item.category}
-                        </Typography>
-                        {item.description && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '0.85rem' }}>
-                            {item.description.length > 50
-                              ? `${item.description.substring(0, 50)}...`
-                              : item.description}
-                          </Typography>
-                        )}
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <Rating value={item.rating || 4.5} precision={0.1} size="small" readOnly />
-                          <Typography variant="caption" sx={{ ml: 0.5 }}>
-                            {item.rating || 4.5} ({item.reviews || Math.floor(Math.random() * 500) + 50} reviews)
-                          </Typography>
-                        </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ff6b35', mb: 1 }}>
-                          R{item.price.toFixed(2)}
-                        </Typography>
-                      </CardContent>
-                      <Box sx={{ p: 2, pt: 0 }}>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          sx={{
-                            bgcolor: '#060624ff',
-                            color: 'white',
-                            '&:hover': { bgcolor: '#040b1fff' },
-                            textTransform: 'none',
-                            fontWeight: 'bold'
-                          }}
-                          onClick={() => addToCart(item)}
-                        >
-                          Add to Cart
-                        </Button>
-                      </Box>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+            {vendor.deals && vendor.deals.length > 0 && (
+              <Chip
+                label={`🔥 ${vendor.deals[0]}`}
+                sx={{
+                  bgcolor: '#ffedd5',
+                  color: '#ff6b35',
+                  fontWeight: 600
+                }}
+              />
             )}
           </Box>
         </Box>
+
+        {/* Category Filter Pills */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#166534' }}>
+            Filter by Category
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            {categories.map(category => (
+              <Chip
+                key={category}
+                label={category}
+                icon={categoryIcons[category] || <MdRestaurant />}
+                onClick={() => setSelectedCategory(category)}
+                sx={{
+                  py: 2.5,
+                  px: 1,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  bgcolor: selectedCategory === category ? categoryColors[category] || '#16a34a' : 'white',
+                  color: selectedCategory === category ? 'white' : '#1f2937',
+                  border: selectedCategory === category ? 'none' : '2px solid #e5e7eb',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: selectedCategory === category ? categoryColors[category] || '#16a34a' : '#f0fdf4',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Sort and Count */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="body1" sx={{ fontWeight: 600, color: '#166534' }}>
+            {filteredItems.length} items found
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: '#6b7280' }}>Sort By:</Typography>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '8px 16px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                backgroundColor: 'white',
+                color: '#1f2937'
+              }}
+            >
+              <option value="rating">Highest Rating</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </Box>
+        </Box>
+
+        {/* Menu Items Grid */}
+        {filteredItems.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 12, bgcolor: 'white', borderRadius: 3 }}>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+              No menu items found
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Try adjusting your search or filter
+            </Typography>
+          </Box>
+        ) : (
+          <Grid container spacing={2.5}>
+            {filteredItems.map(item => (
+              <Grid item xs={6} sm={4} md={3} key={item.id}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: 2.5,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
+                    },
+                    bgcolor: 'white',
+                    overflow: 'hidden',
+                    border: '1px solid #f0f0f0'
+                  }}
+                >
+                  <Box sx={{ position: 'relative', paddingTop: '75%', overflow: 'hidden' }}>
+                    <CardMedia
+                      component="img"
+                      image={item.image || 'https://via.placeholder.com/400x300'}
+                      alt={item.name}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        bgcolor: 'white',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        width: 32,
+                        height: 32,
+                        '&:hover': {
+                          bgcolor: 'white',
+                          transform: 'scale(1.1)'
+                        }
+                      }}
+                      onClick={() => toggleFavorite(item.id)}
+                    >
+                      {favorites.includes(item.id) ? (
+                        <FaHeart color="#ff6b35" size={14} />
+                      ) : (
+                        <FaRegHeart color="#6b7280" size={14} />
+                      )}
+                    </IconButton>
+                  </Box>
+                  <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column' }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem',
+                        mb: 0.5,
+                        color: '#166534',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: '#6b7280',
+                        fontSize: '0.7rem',
+                        mb: 1
+                      }}
+                    >
+                      {item.category}
+                    </Typography>
+                    {item.description && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: '#9ca3af',
+                          fontSize: '0.7rem',
+                          mb: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          lineHeight: 1.4
+                        }}
+                      >
+                        {item.description}
+                      </Typography>
+                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                      <Rating
+                        value={item.rating || 4.5}
+                        precision={0.1}
+                        size="small"
+                        readOnly
+                        sx={{ fontSize: '0.85rem' }}
+                      />
+                      <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 600 }}>
+                        ({item.rating || 4.5})
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#ff6b35',
+                        fontSize: '1rem',
+                        mb: 'auto'
+                      }}
+                    >
+                      R{item.price.toFixed(2)}
+                    </Typography>
+                  </CardContent>
+                  <Box sx={{ p: 1.5, pt: 0 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="small"
+                      sx={{
+                        bgcolor: '#16a34a',
+                        borderRadius: 1.5,
+                        py: 0.75,
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        textTransform: 'none',
+                        '&:hover': { bgcolor: '#15803d' }
+                      }}
+                      onClick={() => addToCart(item)}
+                      startIcon={<FaShoppingCart size={12} />}
+                    >
+                      Add to Cart
+                    </Button>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Container>
     </Box>
   );

@@ -1,12 +1,32 @@
 
 import { FiArrowRight } from "react-icons/fi";
+<<<<<<< HEAD
 import { GiChickenLeg, GiDonut, GiFrenchFries, GiHamburger, GiNoodles, GiPizzaSlice, GiSodaCan, GiTacos } from "react-icons/gi";
+=======
+import { Pizza, Sandwich, Salad, Coffee, IceCream, UtensilsCrossed } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import BannerBackground from "../../assets/images/jbadASS.jpg";
+>>>>>>> b7b83dd (Save all local changes before pulling)
 import Navbar from "./Navbar";
+import "./Home.css";
 
 const Home = () => {
+  const navigate = useNavigate();
+
+  const categories = [
+    { icon: <Pizza />, name: "Pizza", color: "#ff6b35" },
+    { icon: <Sandwich />, name: "Burgers", color: "#f7931e" },
+    { icon: <Salad />, name: "Healthy", color: "#22c55e" },
+    { icon: <Coffee />, name: "Drinks", color: "#fb923c" },
+    { icon: <IceCream />, name: "Desserts", color: "#ec4899" },
+    { icon: <UtensilsCrossed />, name: "More", color: "#16a34a" }
+  ];
+
   return (
     <div className="home-container">
       <Navbar />
+
+      {/* Hero Banner */}
       <div className="home-banner-container">
         {/* Floating food icons in the hero section */}
         <GiPizzaSlice style={{
@@ -104,10 +124,39 @@ const Home = () => {
           <p className="primary-text">
             Order online and have your food ready when you arrive!
           </p>
-          <button className="secondary-button">
-            Order Now <FiArrowRight />{" "}
+          <button className="secondary-button" onClick={() => navigate('/vendor')}>
+            Order Now <FiArrowRight />
           </button>
         </div>
+<<<<<<< HEAD
+=======
+      </div>
+
+      {/* Categories Section */}
+      <div className="categories-section">
+        <div className="categories-header">
+          <h2 className="categories-title">Browse by Category</h2>
+          <p className="categories-subtext">What are you craving today?</p>
+        </div>
+
+        <div className="categories-grid">
+          {categories.map((category, index) => (
+            <div
+              key={index}
+              className="category-card"
+              onClick={() => navigate('/vendor')}
+            >
+              <div
+                className="category-icon"
+                style={{ backgroundColor: category.color }}
+              >
+                {category.icon}
+              </div>
+              <span className="category-name">{category.name}</span>
+            </div>
+          ))}
+        </div>
+>>>>>>> b7b83dd (Save all local changes before pulling)
       </div>
     </div>
   );
