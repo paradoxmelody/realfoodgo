@@ -58,7 +58,7 @@ const Navbar = () => {
   };
 
   return (
-<<<<<<< HEAD
+
     <nav>
       <div className="nav-logo-container">
         <img src={Logo} alt="" width={40} height={40}/>
@@ -82,7 +82,7 @@ const Navbar = () => {
           role="presentation"
           onClick={() => setOpenMenu(false)}
           onKeyDown={() => setOpenMenu(false)}
-=======
+
     <>
       <header className="header" style={{
         backgroundColor: '#ffffff',
@@ -280,8 +280,7 @@ const Navbar = () => {
             display: 'none',
             '@media (max-width: 768px)': { display: 'flex' }
           }}
->>>>>>> b7b83dd (Save all local changes before pulling)
-        >
+
           <Menu size={24} />
         </button>
       </header>
