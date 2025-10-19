@@ -1,4 +1,3 @@
-
 import { FiArrowRight } from "react-icons/fi";
 import { GiChickenLeg, GiDonut, GiFrenchFries, GiHamburger, GiNoodles, GiPizzaSlice, GiSodaCan, GiTacos } from "react-icons/gi";
 import { Pizza, Sandwich, Salad, Coffee, IceCream, UtensilsCrossed } from "lucide-react";
@@ -26,7 +25,6 @@ const Home = () => {
 
       {/* Hero Banner */}
       <div className="home-banner-container">
-        {/* Floating food icons in the hero section */}
         <GiPizzaSlice style={{
           position: 'absolute',
           fontSize: '80px',
@@ -37,6 +35,16 @@ const Home = () => {
           pointerEvents: 'none',
           zIndex: 0
         }} />
+        <GiPizzaSlice style={{
+          position: 'absolute',
+          fontSize: '20px',
+          top: '12%',
+          right: '8%',
+          color: 'rgba(5, 2, 31, 0)',
+          animation: 'float2 7s ease-in-out infinite',
+          pointerEvents: 'none',
+          zIndex: 0
+        }} />
         
         <GiHamburger style={{
           position: 'absolute',
@@ -44,7 +52,7 @@ const Home = () => {
           top: '70%',
           left: '12%',
           color: 'rgba(255, 140, 0, 0.12)',
-          animation: 'float2 11s ease-in-out infinite',
+          animation: 'float3 11s ease-in-out infinite',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -55,7 +63,7 @@ const Home = () => {
           top: '45%',
           right: '25%',
           color: 'rgba(255, 165, 0, 0.1)',
-          animation: 'float3 13s ease-in-out infinite',
+          animation: 'float4 13s ease-in-out infinite',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -159,3 +167,4 @@ const Home = () => {
 };
 
 export default Home;
+ 
