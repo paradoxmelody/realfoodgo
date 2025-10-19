@@ -1,12 +1,10 @@
 
 import { FiArrowRight } from "react-icons/fi";
-<<<<<<< HEAD
 import { GiChickenLeg, GiDonut, GiFrenchFries, GiHamburger, GiNoodles, GiPizzaSlice, GiSodaCan, GiTacos } from "react-icons/gi";
-=======
 import { Pizza, Sandwich, Salad, Coffee, IceCream, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BannerBackground from "../../assets/images/jbadASS.jpg";
->>>>>>> b7b83dd (Save all local changes before pulling)
+
 import Navbar from "./Navbar";
 import "./Home.css";
 
@@ -128,8 +126,6 @@ const Home = () => {
             Order Now <FiArrowRight />
           </button>
         </div>
-<<<<<<< HEAD
-=======
       </div>
 
       {/* Categories Section */}
@@ -156,7 +152,7 @@ const Home = () => {
             </div>
           ))}
         </div>
->>>>>>> b7b83dd (Save all local changes before pulling)
+
       </div>
     </div>
   );
