@@ -12,7 +12,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [resetStep, setResetStep] = useState(1); // 1: email, 2: otp, 3: new password
+  const [resetStep, setResetStep] = useState(1);
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -23,7 +23,6 @@ const LoginForm = ({ onSwitchToSignup }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
-  // Check if account is locked
   const checkLockout = (email) => {
     const lockoutData = localStorage.getItem(`lockout_${email}`);
     if (!lockoutData) return { isLocked: false, attempts: 0 };
@@ -109,7 +108,6 @@ const LoginForm = ({ onSwitchToSignup }) => {
     }
   };
 
-  // Forgot Password Handlers
   const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -123,13 +121,18 @@ const LoginForm = ({ onSwitchToSignup }) => {
       return;
     }
 
+    // Check if email ends with @myuwc.ac.za
+    if (!forgotEmail.toLowerCase().endsWith('@myuwc.ac.za')) {
+      setForgotMessage("Only @myuwc.ac.za email addresses are allowed");
+      return;
+    }
+
     setForgotLoading(true);
 
     try {
       const newOtp = generateOTP();
       setGeneratedOtp(newOtp);
 
-      // Send OTP via email using EmailJS or your backend
       const response = await fetch("/api/send-otp", {
         method: "POST",
         headers: {
@@ -220,7 +223,6 @@ const LoginForm = ({ onSwitchToSignup }) => {
     setForgotLoading(true);
 
     try {
-      // In a real app, you would update the password in Firebase
       console.log(`Password reset for ${forgotEmail}: ${newPassword}`);
 
       setForgotMessage("Password reset successfully!");
@@ -232,6 +234,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
         setNewPassword("");
         setConfirmNewPassword("");
         setGeneratedOtp("");
+        setForgotMessage("");
       }, 2000);
     } catch (err) {
       setForgotMessage("Failed to reset password. Please try again.");
@@ -311,7 +314,16 @@ const LoginForm = ({ onSwitchToSignup }) => {
             <p style={{ color: "#666", fontSize: "14px", fontWeight: 500 }}>Sign in to your account</p>
           </div>
 
-          <div className="input-box" style={{ marginBottom: "20px" }}>
+          <div className="input-box" style={{ marginBottom: "20px", position: "relative" }}>
+            <FaUser style={{
+              position: "absolute",
+              left: "16px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#16a34a",
+              fontSize: "16px",
+              zIndex: 1
+            }} />
             <input
               type="email"
               placeholder="Email"
@@ -320,8 +332,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
               onChange={(e) => setEmail(e.target.value)}
               style={{
                 width: "100%",
-                padding: "14px 16px",
-                paddingLeft: "45px",
+                padding: "14px 16px 14px 45px",
                 border: "2px solid #e5e5e5",
                 borderRadius: "12px",
                 fontSize: "15px",
@@ -334,19 +345,6 @@ const LoginForm = ({ onSwitchToSignup }) => {
               onFocus={(e) => e.target.style.borderColor = "#16a34a"}
               onBlur={(e) => e.target.style.borderColor = "#e5e5e5"}
             />
-            <FaUser style={{
-              position: "absolute",
-              left: "16px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#16a34a",
-              fontSize: "16px"
-            }} />
-            <style>{`
-              input::placeholder {
-                color: #999 !important;
-              }
-            `}</style>
           </div>
 
           <div className="input-box" style={{ marginBottom: "24px", position: "relative" }}>
@@ -356,7 +354,8 @@ const LoginForm = ({ onSwitchToSignup }) => {
               top: "50%",
               transform: "translateY(-50%)",
               color: "#ff9800",
-              fontSize: "16px"
+              fontSize: "16px",
+              zIndex: 1
             }} />
             <input
               type={showPassword ? "text" : "password"}
@@ -366,7 +365,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
-                padding: "14px 45px 14px 45px",
+                padding: "14px 45px",
                 border: "2px solid #e5e5e5",
                 borderRadius: "12px",
                 fontSize: "15px",
@@ -388,7 +387,8 @@ const LoginForm = ({ onSwitchToSignup }) => {
                 transform: "translateY(-50%)",
                 cursor: "pointer",
                 color: "#16a34a",
-                fontSize: "16px"
+                fontSize: "16px",
+                zIndex: 1
               }}
             >
               {showPassword ? <FaEye /> : <FaEyeSlash />}
@@ -554,7 +554,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
                 <div style={{ marginBottom: "20px" }}>
                   <input
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your @myuwc.ac.za email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     required
@@ -772,12 +772,12 @@ const LoginForm = ({ onSwitchToSignup }) => {
             {forgotMessage && (
               <p style={{
                 marginTop: "16px",
-                color: forgotMessage.includes("success") || forgotMessage.includes("verified") ? "#16a34a" : forgotMessage.includes("Invalid") ? "#ef4444" : "#16a34a",
+                color: forgotMessage.includes("success") || forgotMessage.includes("verified") || forgotMessage.includes("sent") ? "#16a34a" : "#ef4444",
                 fontSize: "13px",
                 textAlign: "center",
                 fontWeight: 500,
                 padding: "12px",
-                background: forgotMessage.includes("success") || forgotMessage.includes("verified") ? "rgba(22, 163, 74, 0.08)" : forgotMessage.includes("Invalid") ? "rgba(239, 68, 68, 0.08)" : "rgba(22, 163, 74, 0.08)",
+                background: forgotMessage.includes("success") || forgotMessage.includes("verified") || forgotMessage.includes("sent") ? "rgba(22, 163, 74, 0.08)" : "rgba(239, 68, 68, 0.08)",
                 borderRadius: "8px"
               }}>
                 {forgotMessage}
