@@ -25,36 +25,95 @@ import {
   Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase_data/firebase';
+import { useAuth } from '../context/AuthContext';
 import foodgoLogo from './foodgo.png';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { currentUser, userDetails, logout } = useAuth();
+
   const [activeTab, setActiveTab] = useState('overview');
-  const [user, setUser] = useState({
-    name: 'Moloti Kgaphola',
-    email: '4356470@myuwc.ac.za',
-    phone: '087 346 2234',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
+  const [user, setUser] = useState(userDetails || {
+    name: 'User',
+    email: '',
+    phone: '',
+    avatar: null
   });
   const [tempUser, setTempUser] = useState(user);
   const [editMode, setEditMode] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState([
+    { label: 'Orders', value: '0', icon: <ShoppingCart size={20} />, color: '#16a34a' },
+    { label: 'Favorites', value: '0', icon: <Heart size={20} />, color: '#ff6b35' },
+    { label: 'Total Spent', value: 'R0.00', icon: <Wallet size={20} />, color: '#f59e0b' }
+  ]);
+  const [loading, setLoading] = useState(true);
 
-  const orders = [
-    { id: 'FG001001', date: '2023-11-20', vendor: 'Campus Grill', total: 'R24.50', status: 'Delivered', items: 3 },
-    { id: 'FG001002', date: '2023-11-18', vendor: 'Pizza Place', total: 'R30.00', status: 'Delivered', items: 2 },
-    { id: 'FG001003', date: '2023-11-15', vendor: 'Sushi Express', total: 'R18.75', status: 'Processing', items: 1 },
-  ];
+  // Fetch user orders and calculate stats
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!currentUser) return;
 
-  const stats = [
-    { label: 'Orders', value: '6', icon: <ShoppingCart size={20} />, color: '#16a34a' },
-    { label: 'Favorites', value: '12', icon: <Heart size={20} />, color: '#ff6b35' },
-    { label: 'Total Spent', value: 'R125.50', icon: <Wallet size={20} />, color: '#f59e0b' }
-  ];
+      try {
+        setLoading(true);
+
+        // Fetch orders from Firestore
+        const ordersRef = collection(db, 'orders');
+        const q = query(ordersRef, where('userId', '==', currentUser.uid));
+        const querySnapshot = await getDocs(q);
+
+        const userOrders = [];
+        let totalSpent = 0;
+
+        querySnapshot.forEach((doc) => {
+          const orderData = doc.data();
+          userOrders.push({
+            id: doc.id,
+            ...orderData
+          });
+          totalSpent += orderData.total || 0;
+        });
+
+        setOrders(userOrders);
+
+        // Update stats with real data
+        setStats([
+          { label: 'Orders', value: userOrders.length.toString(), icon: <ShoppingCart size={20} />, color: '#16a34a' },
+          { label: 'Favorites', value: '0', icon: <Heart size={20} />, color: '#ff6b35' },
+          { label: 'Total Spent', value: `R${totalSpent.toFixed(2)}`, icon: <Wallet size={20} />, color: '#f59e0b' }
+        ]);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [currentUser]);
+
+  // Update user when userDetails changes
+  useEffect(() => {
+    if (userDetails) {
+      setUser(userDetails);
+      setTempUser(userDetails);
+    }
+  }, [userDetails]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to logout');
+    }
+  };
 
   const settingsMenu = [
     { label: 'Personal Settings', icon: <User size={20} />, color: '#16a34a', action: () => alert('Personal Settings') },
@@ -65,34 +124,22 @@ const ProfilePage = () => {
     { label: 'Help & Support', icon: <HelpCircle size={20} />, color: '#06b6d4', action: () => alert('Help & Support') },
     { label: 'Contact Us', icon: <MessageSquare size={20} />, color: '#f97316', action: () => alert('Contact Us') },
     { label: 'Terms & Conditions', icon: <FileText size={20} />, color: '#64748b', action: () => alert('Terms & Conditions') },
-    { label: 'Logout', icon: <LogOut size={20} />, color: '#ef4444', action: () => navigate('/auth') }
+    { label: 'Logout', icon: <LogOut size={20} />, color: '#ef4444', action: handleLogout }
   ];
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          setUser(userData);
-          setTempUser(userData);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-    fetchUserData();
-  }, []);
-
   const handleSaveProfile = async () => {
+    if (!currentUser) return;
+
     try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { ...tempUser });
+      const userRef = doc(db, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        name: tempUser.name,
+        email: tempUser.email,
+        phone: tempUser.phone
+      });
       setUser(tempUser);
       setEditMode(false);
+      alert('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile');
@@ -100,20 +147,43 @@ const ProfilePage = () => {
   };
 
   const handleImageUpload = async (e) => {
+    if (!currentUser) return;
+
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
     setUploading(true);
     try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
-      const storageRef = ref(storage, `profile_images/${userId}/${file.name}`);
+      const fileName = `${currentUser.uid}_${Date.now()}`;
+      const storageRef = ref(storage, `profile_images/${currentUser.uid}/${fileName}`);
+
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
-      const userRef = doc(db, 'users', userId);
+
+      // Update Firestore with new avatar URL
+      const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, { avatar: downloadURL });
+
+      // Update local state
       setUser((prev) => ({ ...prev, avatar: downloadURL }));
+      setTempUser((prev) => ({ ...prev, avatar: downloadURL }));
+
+      alert('Profile picture updated successfully!');
     } catch (error) {
-      console.error(error);
-      alert('Failed to upload image');
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -165,7 +235,7 @@ const ProfilePage = () => {
             </button>
 
             <button
-              onClick={() => navigate('/vendors')}
+              onClick={() => navigate('/vendor')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -213,16 +283,6 @@ const ProfilePage = () => {
             e.currentTarget.style.border = '2px solid transparent';
             e.currentTarget.style.boxShadow = 'none';
           }}
-          onFocus={(e) => {
-            e.currentTarget.style.border = '2px solid #16a34a';
-            e.currentTarget.style.boxShadow = '0 0 0 4px rgba(22, 163, 74, 0.2)';
-            e.currentTarget.style.background = 'white';
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.border = '2px solid transparent';
-            e.currentTarget.style.boxShadow = 'none';
-            e.currentTarget.style.background = '#f9fafb';
-          }}
           >
             <Search size={18} style={{ color: '#9ca3af', marginRight: '0.5rem' }} />
             <input
@@ -235,6 +295,16 @@ const ProfilePage = () => {
                 fontSize: '0.9rem',
                 width: '100%',
                 color: '#1f2937'
+              }}
+              onFocus={(e) => {
+                e.target.parentElement.style.border = '2px solid #16a34a';
+                e.target.parentElement.style.boxShadow = '0 0 0 4px rgba(22, 163, 74, 0.2)';
+                e.target.parentElement.style.background = 'white';
+              }}
+              onBlur={(e) => {
+                e.target.parentElement.style.border = '2px solid transparent';
+                e.target.parentElement.style.boxShadow = 'none';
+                e.target.parentElement.style.background = '#f9fafb';
               }}
             />
           </div>
@@ -306,7 +376,7 @@ const ProfilePage = () => {
             onMouseLeave={(e) => e.target.style.background = '#16a34a'}
           >
             <User size={20} />
-            {user.name.split(' ')[0]}
+            {user.name ? user.name.split(' ')[0] : 'Profile'}
           </button>
         </div>
       </nav>
@@ -348,27 +418,32 @@ const ProfilePage = () => {
                 height: '150px',
                 margin: '0 auto'
               }}>
-                <img
-                  src={user.avatar}
-                  alt="Profile"
-                  className="profile-avatar"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '50%',
-                    border: '4px solid #16a34a'
-                  }}
-                />
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  border: '4px solid #16a34a',
+                  background: user.avatar ? `url(${user.avatar})` : '#e5e7eb',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {!user.avatar && (
+                    <User size={60} color="#9ca3af" />
+                  )}
+                </div>
                 <button
                   className="profile-camera-btn"
                   onClick={() => document.getElementById('file-input').click()}
                   title="Change Avatar"
+                  disabled={uploading}
                   style={{
                     position: 'absolute',
                     bottom: '10px',
                     right: '10px',
-                    background: '#16a34a',
+                    background: uploading ? '#9ca3af' : '#16a34a',
                     border: 'none',
                     borderRadius: '50%',
                     width: '40px',
@@ -377,17 +452,21 @@ const ProfilePage = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    cursor: 'pointer',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#15803d';
-                    e.currentTarget.style.transform = 'scale(1.1)';
+                    if (!uploading) {
+                      e.currentTarget.style.background = '#15803d';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#16a34a';
-                    e.currentTarget.style.transform = 'scale(1)';
+                    if (!uploading) {
+                      e.currentTarget.style.background = '#16a34a';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
                   }}
                 >
                   <Camera size={18} />
@@ -401,12 +480,13 @@ const ProfilePage = () => {
                   style={{ display: 'none' }}
                 />
               </div>
+              {uploading && <p style={{ textAlign: 'center', color: '#16a34a', marginTop: '0.5rem' }}>Uploading...</p>}
             </div>
 
             {/* User Info */}
             <div className="profile-user-info">
               <h2 className="profile-username">{user.name}</h2>
-              <p className="profile-member-since">Member since November 2023</p>
+              <p className="profile-member-since">Member since {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Recently'}</p>
             </div>
 
             {/* Stats Cards */}
@@ -452,12 +532,12 @@ const ProfilePage = () => {
                     {editMode ? (
                       <input
                         type="text"
-                        value={tempUser[field.key]}
+                        value={tempUser[field.key] || ''}
                         onChange={(e) => setTempUser({ ...tempUser, [field.key]: e.target.value })}
                         className="field-input"
                       />
                     ) : (
-                      <p className="field-value">{user[field.key]}</p>
+                      <p className="field-value">{user[field.key] || 'Not provided'}</p>
                     )}
                   </div>
                 ))}
@@ -481,25 +561,31 @@ const ProfilePage = () => {
             {/* Recent Orders Section */}
             <div className="profile-section">
               <h3 className="section-title">Recent Orders</h3>
-              <div className="orders-list">
-                {orders.map((order) => (
-                  <div key={order.id} className="order-card">
-                    <div className="order-header">
-                      <div>
-                        <p className="order-vendor">{order.vendor}</p>
-                        <p className="order-id">Order #{order.id}</p>
+              {loading ? (
+                <p style={{ textAlign: 'center', color: '#6b7280' }}>Loading orders...</p>
+              ) : orders.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#6b7280' }}>No orders yet. Start ordering now!</p>
+              ) : (
+                <div className="orders-list">
+                  {orders.map((order) => (
+                    <div key={order.id} className="order-card">
+                      <div className="order-header">
+                        <div>
+                          <p className="order-vendor">{order.vendor || 'Unknown Vendor'}</p>
+                          <p className="order-id">Order #{order.id}</p>
+                        </div>
+                        <span className={`order-status status-${(order.status || 'pending').toLowerCase()}`}>
+                          {order.status || 'Pending'}
+                        </span>
                       </div>
-                      <span className={`order-status status-${order.status.toLowerCase()}`}>
-                        {order.status}
-                      </span>
+                      <div className="order-footer">
+                        <span className="order-items">{order.items || 0} items</span>
+                        <span className="order-total">R{(order.total || 0).toFixed(2)}</span>
+                      </div>
                     </div>
-                    <div className="order-footer">
-                      <span className="order-items">{order.items} items</span>
-                      <span className="order-total">{order.total}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}

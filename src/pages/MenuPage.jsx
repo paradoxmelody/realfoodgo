@@ -24,7 +24,8 @@ import {
   FaShoppingCart,
   FaStore,
   FaUser,
-  FaUtensils
+  FaUtensils,
+  FaQuestionCircle
 } from 'react-icons/fa';
 import {
   MdCoffee,
@@ -50,33 +51,41 @@ const Menu = () => {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('rating');
+  const [user, setUser] = useState({ name: 'User' });
 
   useEffect(() => {
     fetchVendorAndMenu();
+    fetchUserData();
   }, [vendorId]);
 
   useEffect(() => {
     filterMenuItems();
   }, [menuItems, selectedCategory, searchQuery, sortBy]);
 
+  async function fetchUserData() {
+    try {
+      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1'; // replace with auth user id
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) setUser(userSnap.data());
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  }
+
   async function fetchVendorAndMenu() {
     try {
       const vendorRef = doc(db, 'vendors', vendorId);
       const vendorSnap = await getDoc(vendorRef);
 
-      if (vendorSnap.exists()) {
-        setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
-      }
+      if (vendorSnap.exists()) setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
 
       const menuQuery = query(
         collection(db, 'menu_items'),
         where('vendorId', '==', vendorId)
       );
       const menuSnapshot = await getDocs(menuQuery);
-      const menuList = menuSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const menuList = menuSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       setMenuItems(menuList);
       setFilteredItems(menuList);
@@ -90,9 +99,7 @@ const Menu = () => {
   function filterMenuItems() {
     let filtered = menuItems;
 
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(item => item.category === selectedCategory);
-    }
+    if (selectedCategory !== 'All') filtered = filtered.filter(item => item.category === selectedCategory);
 
     if (searchQuery) {
       filtered = filtered.filter(item =>
@@ -101,23 +108,16 @@ const Menu = () => {
       );
     }
 
-    if (sortBy === 'rating') {
-      filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    } else if (sortBy === 'price-low') {
-      filtered = [...filtered].sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      filtered = [...filtered].sort((a, b) => b.price - a.price);
-    }
+    if (sortBy === 'rating') filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sortBy === 'price-low') filtered = [...filtered].sort((a, b) => a.price - b.price);
+    else if (sortBy === 'price-high') filtered = [...filtered].sort((a, b) => b.price - a.price);
 
     setFilteredItems(filtered);
   }
 
   function toggleFavorite(itemId) {
-    if (favorites.includes(itemId)) {
-      setFavorites(favorites.filter(id => id !== itemId));
-    } else {
-      setFavorites([...favorites, itemId]);
-    }
+    if (favorites.includes(itemId)) setFavorites(favorites.filter(id => id !== itemId));
+    else setFavorites([...favorites, itemId]);
   }
 
   function addToCart(item) {
@@ -129,9 +129,7 @@ const Menu = () => {
           ? { ...cartItem, quantity: cartItem.quantity + 1 }
           : cartItem
       ));
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
+    } else setCart([...cart, { ...item, quantity: 1 }]);
 
     alert(`${item.name} added to cart!`);
   }
@@ -174,8 +172,8 @@ const Menu = () => {
 
   return (
     <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
-      {/* Top Navigation with Search */}
-      <AppBar position="sticky" sx={{ bgcolor: 'white', color: '#1f2937', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+      {/* Cart-style Navbar */}
+      <AppBar position="fixed" sx={{ bgcolor: 'white', color: '#1f2937', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', zIndex: 110 }}>
         <Toolbar sx={{ gap: 2 }}>
           <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
             <img src={foodgoLogo} width={50} height={40} alt="logo" />
@@ -190,35 +188,23 @@ const Menu = () => {
           <Button
             color="inherit"
             startIcon={<FaUtensils />}
-            sx={{
-              bgcolor: '#16a34a',
-              color: 'white',
-              '&:hover': { bgcolor: '#15803d' },
-              borderRadius: 2,
-              px: 2
-            }}
+            sx={{ bgcolor: '#16a34a', color: 'white', '&:hover': { bgcolor: '#15803d' }, borderRadius: 2, px: 2 }}
           >
             Menu
           </Button>
 
-          {/* Search Bar in Center */}
           <TextField
             placeholder="Search menu items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
-            InputProps={{
-              startAdornment: <FaSearch style={{ marginRight: 8, color: '#9ca3af' }} />
-            }}
+            InputProps={{ startAdornment: <FaSearch style={{ marginRight: 8, color: '#9ca3af' }} /> }}
             sx={{
               flexGrow: 1,
               maxWidth: 500,
               bgcolor: '#f9fafb',
               borderRadius: 3,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 3,
-                '& fieldset': { border: 'none' }
-              }
+              '& .MuiOutlinedInput-root': { borderRadius: 3, '& fieldset': { border: 'none' } }
             }}
           />
 
@@ -226,12 +212,22 @@ const Menu = () => {
             <IconButton color="inherit" onClick={() => navigate('/CartPage')} sx={{ color: '#1f2937' }}>
               <FaShoppingCart />
             </IconButton>
-            <IconButton color="inherit" onClick={() => navigate('/ProfilePage')} sx={{ color: '#1f2937' }}>
-              <FaUser />
+            <IconButton color="inherit" onClick={() => alert('Help & Support')} sx={{ color: '#1f2937' }}>
+              <FaQuestionCircle />
             </IconButton>
+            <Button
+              onClick={() => navigate('/ProfilePage')}
+              sx={{ border: '2px solid #e5e7eb', color: '#1f2937', borderRadius: 2, px: 1.5 }}
+              startIcon={<FaUser />}
+            >
+              {user.name.split(' ')[0]}
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>
+
+      {/* Page content offset for fixed navbar */}
+      <Toolbar />
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Restaurant Header */}
@@ -250,11 +246,7 @@ const Menu = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Chip
               label={vendor.category}
-              sx={{
-                bgcolor: '#16a34a',
-                color: 'white',
-                fontWeight: 600
-              }}
+              sx={{ bgcolor: '#16a34a', color: 'white', fontWeight: 600 }}
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Rating value={vendor.rating || 0} precision={0.1} size="small" readOnly />
@@ -265,11 +257,7 @@ const Menu = () => {
             {vendor.deals && vendor.deals.length > 0 && (
               <Chip
                 label={`🔥 ${vendor.deals[0]}`}
-                sx={{
-                  bgcolor: '#ffedd5',
-                  color: '#ff6b35',
-                  fontWeight: 600
-                }}
+                sx={{ bgcolor: '#ffedd5', color: '#ff6b35', fontWeight: 600 }}
               />
             )}
           </Box>
@@ -390,84 +378,38 @@ const Menu = () => {
                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         width: 32,
                         height: 32,
-                        '&:hover': {
-                          bgcolor: 'white',
-                          transform: 'scale(1.1)'
-                        }
+                        '&:hover': { bgcolor: 'white', transform: 'scale(1.1)' }
                       }}
                       onClick={() => toggleFavorite(item.id)}
                     >
-                      {favorites.includes(item.id) ? (
-                        <FaHeart color="#ff6b35" size={14} />
-                      ) : (
-                        <FaRegHeart color="#6b7280" size={14} />
-                      )}
+                      {favorites.includes(item.id) ? <FaHeart color="#ff6b35" size={14} /> : <FaRegHeart color="#6b7280" size={14} />}
                     </IconButton>
                   </Box>
                   <CardContent sx={{ flexGrow: 1, p: 1.5, display: 'flex', flexDirection: 'column' }}>
                     <Typography
                       variant="h6"
-                      sx={{
-                        fontWeight: 'bold',
-                        fontSize: '0.9rem',
-                        mb: 0.5,
-                        color: '#166534',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
+                      sx={{ fontWeight: 'bold', fontSize: '0.9rem', mb: 0.5, color: '#166534', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                     >
                       {item.name}
                     </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#6b7280',
-                        fontSize: '0.7rem',
-                        mb: 1
-                      }}
-                    >
+                    <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.7rem', mb: 1 }}>
                       {item.category}
                     </Typography>
                     {item.description && (
                       <Typography
                         variant="body2"
-                        sx={{
-                          color: '#9ca3af',
-                          fontSize: '0.7rem',
-                          mb: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          lineHeight: 1.4
-                        }}
+                        sx={{ color: '#9ca3af', fontSize: '0.7rem', mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.4 }}
                       >
                         {item.description}
                       </Typography>
                     )}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-                      <Rating
-                        value={item.rating || 4.5}
-                        precision={0.1}
-                        size="small"
-                        readOnly
-                        sx={{ fontSize: '0.85rem' }}
-                      />
+                      <Rating value={item.rating || 4.5} precision={0.1} size="small" readOnly sx={{ fontSize: '0.85rem' }} />
                       <Typography variant="caption" sx={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 600 }}>
                         ({item.rating || 4.5})
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 'bold',
-                        color: '#ff6b35',
-                        fontSize: '1rem',
-                        mb: 'auto'
-                      }}
-                    >
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ff6b35', fontSize: '1rem', mb: 'auto' }}>
                       R{item.price.toFixed(2)}
                     </Typography>
                   </CardContent>
@@ -476,15 +418,7 @@ const Menu = () => {
                       fullWidth
                       variant="contained"
                       size="small"
-                      sx={{
-                        bgcolor: '#16a34a',
-                        borderRadius: 1.5,
-                        py: 0.75,
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        textTransform: 'none',
-                        '&:hover': { bgcolor: '#15803d' }
-                      }}
+                      sx={{ bgcolor: '#16a34a', borderRadius: 1.5, py: 0.75, fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'none', '&:hover': { bgcolor: '#15803d' } }}
                       onClick={() => addToCart(item)}
                       startIcon={<FaShoppingCart size={12} />}
                     >

@@ -117,3 +117,6 @@
   min-height: 100vh;
   display: flex;
 }
+select {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
