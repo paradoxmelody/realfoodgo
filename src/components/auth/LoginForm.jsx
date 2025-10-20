@@ -73,6 +73,26 @@ const LoginForm = ({ onSwitchToSignup }) => {
     setLoading(true);
     setMessage(null);
 
+    // Validate email format first
+    if (!email.trim()) {
+      setMessage("Please enter your email address");
+      setLoading(false);
+      return;
+    }
+
+    if (!email.toLowerCase().endsWith('@myuwc.ac.za')) {
+      setMessage("Only @myuwc.ac.za email addresses are allowed");
+      setLoading(false);
+      return;
+    }
+
+    if (!password.trim()) {
+      setMessage("Please enter your password");
+      setLoading(false);
+      return;
+    }
+
+    // Check if account is locked
     const lockStatus = checkLockout(email);
     if (lockStatus.isLocked) {
       setMessage(`Account locked. Too many failed attempts. Try again in ${lockStatus.minutesLeft} minute(s).`);
@@ -121,7 +141,6 @@ const LoginForm = ({ onSwitchToSignup }) => {
       return;
     }
 
-    // Check if email ends with @myuwc.ac.za
     if (!forgotEmail.toLowerCase().endsWith('@myuwc.ac.za')) {
       setForgotMessage("Only @myuwc.ac.za email addresses are allowed");
       return;
@@ -223,7 +242,21 @@ const LoginForm = ({ onSwitchToSignup }) => {
     setForgotLoading(true);
 
     try {
-      console.log(`Password reset for ${forgotEmail}: ${newPassword}`);
+      // Call your backend API to reset the password
+      const response = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: forgotEmail,
+          newPassword: newPassword
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reset password");
+      }
 
       setForgotMessage("Password reset successfully!");
       setTimeout(() => {
@@ -237,6 +270,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
         setForgotMessage("");
       }, 2000);
     } catch (err) {
+      console.error("Error resetting password:", err);
       setForgotMessage("Failed to reset password. Please try again.");
     } finally {
       setForgotLoading(false);
@@ -345,6 +379,11 @@ const LoginForm = ({ onSwitchToSignup }) => {
               onFocus={(e) => e.target.style.borderColor = "#16a34a"}
               onBlur={(e) => e.target.style.borderColor = "#e5e5e5"}
             />
+            <style>{`
+              input::placeholder {
+                color: #999 !important;
+              }
+            `}</style>
           </div>
 
           <div className="input-box" style={{ marginBottom: "24px", position: "relative" }}>
@@ -365,7 +404,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
-                padding: "14px 45px",
+                padding: "14px 45px 14px 45px",
                 border: "2px solid #e5e5e5",
                 borderRadius: "12px",
                 fontSize: "15px",
@@ -604,7 +643,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
                     type="text"
                     placeholder="Enter 6-digit OTP"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     maxLength="6"
                     required
                     style={{
