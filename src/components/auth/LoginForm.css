@@ -54,7 +54,7 @@
 
 }
 .input-box input::placeholder{
-    color: #fff;
+    color: #999;
 }
 
 .input-box .icon{
