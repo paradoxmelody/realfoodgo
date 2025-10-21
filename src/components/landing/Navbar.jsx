@@ -1,253 +1,181 @@
-import {
-  Home,
-  Store,
-  ShoppingCart,
-  User,
-  Search,
-  Menu
-} from 'lucide-react';
-import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Badge from "@mui/material/Badge";
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import Logo from '../../assets/images/foodgo.png';
-import './Navbar.css';
-import { signInWithEmailAndPassword } from "firebase/auth"; 
-import { auth } from "../../firebase_data/firebase"; 
-import { loginUser } from "../../firebase_data/auth"; 
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Badge } from '@mui/material';
+import { Home, Store, ShoppingCart, User, Search, HelpCircle } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import foodgoLogo from '../../assets/images/foodgo.png';
 
-
-
-const Navbar = () => {
-  const [openMenu, setOpenMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
+const Navbar = ({ searchQuery, setSearchQuery }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const cartCount = 0;
-  
+  const { getTotalItems } = useCart();
+  const { userDetails } = useAuth();
+  const [cartCount, setCartCount] = useState(0);
+
   useEffect(() => {
-    const storedUser = localStorage.getItem("username");
-    const loggedInStatus = localStorage.getItem("isLoggedIn") === "true";
-    if (storedUser && loggedInStatus) {
-      setUsername(storedUser);
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
+    const count = getTotalItems();
+    setCartCount(count);
+  }, [getTotalItems]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("username");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
-    setUsername("");
-    navigate("/");
-    window.location.reload();
-  };
+  const user = userDetails || { name: 'User' };
 
-  const menuOptions = [
-    { text: "Home", icon: <Home size={20} />, action: () => navigate('/') },
-    { text: "Restaurants", icon: <Store size={20} />, action: () => navigate('/vendor') },
-    { text: "Cart", icon: <ShoppingCart size={20} />, action: () => navigate('/CartPage') },
-  ];
-
-  const handleMenuClick = (action) => {
-    if (action) action();
-    setOpenMenu(false);
-  };
-
-  const handleSearch = (e) => {
-    if (e.key === 'Enter') {
-      navigate(`/vendor?search=${searchQuery}`);
-    }
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.includes(path);
   };
 
   return (
-    <>
-      {/* Header */}
-      <header className="header" style={{ backgroundColor: '#ffffff', padding: '1rem 2%', paddingBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {/* Logo */}
-        <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <img src={Logo} alt="FoodGo" style={{ height: '48px' }} />
-        </div>
+    <Box sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      zIndex: 1100,
+      bgcolor: 'white',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+    }}>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: '1rem 5%',
+        maxWidth: '1600px',
+        margin: '0 auto'
+      }}>
 
-        {/* Navigation Links */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              backgroundColor: location.pathname === '/' ? '#16a34a' : 'transparent',
-              color: location.pathname === '/' ? 'white' : '#1f2937',
-              fontWeight: location.pathname === '/' ? 600 : 500,
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-            }}
-          >
-            <Home size={18} strokeWidth={2.5} />
-            Home
-          </button>
+        {/* Logo + Nav Links */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+            <img src={foodgoLogo} alt="FoodGo" width={200} height={200} />
+          </Box>
 
-          <button
-            onClick={() => navigate('/vendor')}
-            style={{
-              backgroundColor: location.pathname === '/vendor' ? '#16a34a' : 'transparent',
-              color: location.pathname === '/vendor' ? 'white' : '#1f2937',
-              fontWeight: location.pathname === '/vendor' ? 600 : 500,
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-            }}
-          >
-            <Store size={18} strokeWidth={2.5} />
-            Restaurants
-          </button>
-        </nav>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                background: isActive('/') ? '#f3f4f6' : 'none',
+                color: isActive('/') ? '#16a34a' : '#1f2937',
+                fontWeight: 500,
+                fontSize: '0.95rem'
+              }}
+            >
+              <Home size={18} color={isActive('/') ? '#16a34a' : '#1f2937'} /> Home
+            </button>
+
+            <button
+              onClick={() => navigate('/vendor')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                background: isActive('/vendor') ? '#f3f4f6' : 'none',
+                color: isActive('/vendor') ? '#16a34a' : '#1f2937',
+                fontWeight: 600,
+                fontSize: '0.95rem'
+              }}
+            >
+              <Store size={18} color={isActive('/vendor') ? '#16a34a' : '#1f2937'} /> Vendors
+            </button>
+          </Box>
+        </Box>
 
         {/* Search Bar */}
-        <div style={{ flex: 1, maxWidth: '300px', margin: '0 1.5rem' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: '#f9fafb',
-              borderRadius: '0.5rem',
-              padding: '0.5rem 1rem',
-              border: '2px solid transparent',
-              transition: 'all 0.3s ease',
-            }}
-          >
-            <Search size={18} style={{ color: '#9ca3af', marginRight: '0.5rem' }} />
+        <Box sx={{ flexGrow: 1, maxWidth: 500, mx: 3 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: '#f9fafb',
+            borderRadius: '2rem',
+            px: 2,
+            py: 0.5,
+            border: '2px solid transparent',
+            transition: 'all 0.3s ease',
+            '&:focus-within': {
+              borderColor: '#16a34a'
+            }
+          }}>
+            <Search size={25} style={{ color: '#9ca3af', marginRight: 8 }} />
             <input
               type="text"
               placeholder="Search restaurants..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleSearch}
-              style={{ border: 'none', backgroundColor: 'transparent', outline: 'none', fontSize: '0.9rem', width: '100%', color: '#1f2937' }}
+              value={searchQuery || ''}
+              onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                width: '100%',
+                background: 'transparent'
+              }}
             />
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Right Icons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          {/* Cart */}
-          <button onClick={() => navigate('/CartPage')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', position: 'relative' }}>
-            <Badge badgeContent={cartCount} color="error" style={{ fontSize: '0.75rem' }}>
-              <ShoppingCart size={22} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          {/* Cart with count */}
+          <button
+            onClick={() => navigate('/CartPage')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Badge
+              badgeContent={cartCount}
+              color="error"
+            >
+              <ShoppingCart
+                size={22}
+                color={isActive('/CartPage') ? '#16a34a' : '#111827'}
+              />
             </Badge>
           </button>
 
-          {/* Login/Profile */}
-          {isLoggedIn ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button 
-                onClick={() => navigate('/ProfilePage')} 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem',
-                  padding: '0.5rem',
-                  fontSize: '0.95rem',
-                  fontWeight: 500,
-                  color: '#1f2937'
-                }}
-              >
-                <User size={22} />
-                <span>{username}</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => navigate('/auth')}
-              style={{ 
-                backgroundColor: '#16a34a', 
-                color: 'white', 
-                border: 'none', 
-                padding: '0.5rem 1.25rem', 
-                borderRadius: '0.5rem', 
-                fontWeight: 600, 
-                cursor: 'pointer', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem' 
-              }}
-            >
-              <User size={18} /> Login/Signup
-            </button>
-          )}
-
-          {/* Hamburger for Mobile */}
-          <button onClick={() => setOpenMenu(true)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <Menu size={24} />
+          <button
+            onClick={() => alert('Help & Support')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <HelpCircle size={22} color={isActive('/help') ? '#16a34a' : '#111827'} />
           </button>
-        </div>
-      </header>
 
-      {/* Mobile Drawer */}
-      <Drawer open={openMenu} onClose={() => setOpenMenu(false)} anchor="right">
-        <Box sx={{ width: 280 }} role="presentation">
-          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <img src={Logo} alt="FoodGo" style={{ height: '30px' }} />
-          </Box>
-          <Divider />
-          <List>
-            {menuOptions.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton onClick={() => handleMenuClick(item.action)}>
-                  <ListItemIcon sx={{ minWidth: 40, color: '#16a34a' }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.95rem', fontWeight: 500 }} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-          <Divider sx={{ my: 2 }} />
-          <Box sx={{ px: 2 }}>
-            {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                style={{ width: '100%', backgroundColor: '#16a34a', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}
-              >
-                Logout
-              </button>
-            ) : (
-              <button
-                onClick={() => { navigate('/auth'); setOpenMenu(false); }}
-                style={{ width: '100%', backgroundColor: '#16a34a', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}
-              >
-                Login / Sign Up
-              </button>
-            )}
-          </Box>
+          <button
+            onClick={() => navigate('/ProfilePage')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              border: '2px solid #e5e7eb',
+              color: isActive('/ProfilePage') ? '#16a34a' : '#1f2937',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              cursor: 'pointer'
+            }}
+          >
+            <User size={20} color={isActive('/ProfilePage') ? '#16a34a' : '#1f2937'} />
+            {user?.name?.split(' ')[0] || 'User'}
+          </button>
         </Box>
-      </Drawer>
-
-      {/* Spacer */}
-      <div style={{ height: '70px' }} />
-    </>
+      </Box>
+    </Box>
   );
 };
 

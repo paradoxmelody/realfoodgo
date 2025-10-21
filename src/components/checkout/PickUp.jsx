@@ -14,7 +14,7 @@ const PickupForm = ({ deliveryInfo, onInputChange, onPickupTimeChange }) => {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     
-    const closingHour = 23;
+    const closingHour = 25;
     
     let startHour = currentHour;
     let startMinute = currentMinute + 30;

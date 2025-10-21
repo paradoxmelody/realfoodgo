@@ -8,7 +8,7 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase_data/firebase';
 
 const AuthContext = createContext();
@@ -26,11 +26,7 @@ export const AuthProvider = ({ children }) => {
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🕒 Inactivity Timer Settings
-  const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes in ms
-  let inactivityTimer = null;
-
-  // 🔐 Keep session persistent across browser restarts
+  // Keep session persistent across browser restarts - NO AUTO LOGOUT
   useEffect(() => {
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
@@ -39,18 +35,27 @@ export const AuthProvider = ({ children }) => {
 
           if (user) {
             try {
+              // Real-time listener for user data
               const userRef = doc(db, 'users', user.uid);
-              const userSnap = await getDoc(userRef);
-              if (userSnap.exists()) {
-                setUserDetails(userSnap.data());
-              }
-              startInactivityTimer(); // start timer when user is active
+
+              // Use onSnapshot for real-time updates
+              const unsubscribeUserData = onSnapshot(userRef, (userSnap) => {
+                if (userSnap.exists()) {
+                  setUserDetails(userSnap.data());
+                } else {
+                  setUserDetails(null);
+                }
+              }, (error) => {
+                console.error('Error listening to user data:', error);
+              });
+
+              // Store unsubscribe function to clean up later
+              return () => unsubscribeUserData();
             } catch (error) {
-              console.error('Error fetching user details:', error);
+              console.error('Error setting up user listener:', error);
             }
           } else {
             setUserDetails(null);
-            clearInactivityTimer();
           }
 
           setLoading(false);
@@ -60,48 +65,15 @@ export const AuthProvider = ({ children }) => {
       })
       .catch((error) => {
         console.error('Error setting persistence:', error);
+        setLoading(false);
       });
   }, []);
 
-  // 🕒 Start inactivity timer
-  const startInactivityTimer = () => {
-    clearInactivityTimer();
-    inactivityTimer = setTimeout(() => {
-      console.log('User inactive for 10 minutes — auto logging out...');
-      logout();
-    }, INACTIVITY_LIMIT);
-  };
-
-  // 🕒 Reset timer on user activity
-  const resetInactivityTimer = () => {
-    clearInactivityTimer();
-    if (currentUser) startInactivityTimer();
-  };
-
-  // 🧹 Clear timer
-  const clearInactivityTimer = () => {
-    if (inactivityTimer) clearTimeout(inactivityTimer);
-  };
-
-  // 🎯 Track user activity (mouse, keyboard, etc.)
-  useEffect(() => {
-    const events = ['mousemove', 'keydown', 'click', 'scroll'];
-    const handleActivity = () => resetInactivityTimer();
-
-    events.forEach((event) => window.addEventListener(event, handleActivity));
-
-    return () => {
-      events.forEach((event) => window.removeEventListener(event, handleActivity));
-      clearInactivityTimer();
-    };
-  }, [currentUser]);
-
-  // 🔑 Login
+  // Login
   const login = async (email, password) => {
     try {
       await setPersistence(auth, browserLocalPersistence);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      startInactivityTimer();
       return userCredential.user;
     } catch (error) {
       console.error('Login error:', error);
@@ -109,22 +81,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🧾 Signup
+  // Signup
   const signup = async (email, password, name, phone) => {
     try {
       await setPersistence(auth, browserLocalPersistence);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Create user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         name,
         email,
         phone,
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-        createdAt: new Date().toISOString()
+        avatar: null,
+        createdAt: new Date(),
+        favorites: {
+          restaurants: [],
+          foods: []
+        },
+        paymentMethods: [],
+        cart: []
       });
 
-      startInactivityTimer();
       return user;
     } catch (error) {
       console.error('Signup error:', error);
@@ -132,13 +110,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🚪 Logout
+  // Logout
   const logout = async () => {
     try {
       await signOut(auth);
       setCurrentUser(null);
       setUserDetails(null);
-      clearInactivityTimer();
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

@@ -30,7 +30,9 @@ import {
 import { GiNoodles, GiTacos } from 'react-icons/gi';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase_data/firebase';
+import { getAuth } from 'firebase/auth';
 import foodgoLogo from './foodgo.png';
+import Navbar from '../components/landing/Navbar';
 
 const VendorsPage = () => {
   const navigate = useNavigate();
@@ -39,9 +41,8 @@ const VendorsPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState({
-    name: 'User'
-  });
+  const [user, setUser] = useState({ name: 'User' });
+  const [cart, setCart] = useState([]);
 
   const categoryIcons = [
     { name: 'Hot Deals', icon: <Flame />, color: '#ff6b35', value: 'deals' },
@@ -61,12 +62,25 @@ const VendorsPage = () => {
 
   async function fetchUserData() {
     try {
-      const userId = 'MoWabG5a62fsUosBOW2a1UtLJYo1';
-      const userRef = doc(db, 'users', userId);
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        console.warn('No logged-in user found');
+        return;
+      }
+
+      const userRef = doc(db, 'users', currentUser.uid);
       const userSnap = await getDoc(userRef);
+
       if (userSnap.exists()) {
         const userData = userSnap.data();
         setUser(userData);
+
+        // Assuming cart is stored in user document
+        setCart(userData.cart || []);
+      } else {
+        console.warn('User document not found');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -121,194 +135,13 @@ const VendorsPage = () => {
   return (
     <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
       {/* Custom Navbar */}
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        padding: '1rem 5%',
-        background: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 100,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img src={foodgoLogo} width={50} height={40} alt="logo" />
-          </div>
-
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1f2937',
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-              onMouseLeave={(e) => e.target.style.background = 'none'}
-            >
-              <Home size={20} />
-              Home
-            </button>
-
-            <button
-              style={{
-                background: '#16a34a',
-                border: 'none',
-                color: 'white',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#15803d'}
-              onMouseLeave={(e) => e.target.style.background = '#16a34a'}
-            >
-              <Store size={20} />
-              Vendors
-            </button>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div style={{
-          flexGrow: 1,
-          maxWidth: '500px',
-          margin: '0 2rem'
-        }}>
-          <div style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            background: '#f9fafb',
-            borderRadius: '1.5rem',
-            padding: '0.6rem 1rem',
-            border: '2px solid transparent',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.border = '2px solid #16a34a';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22, 163, 74, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.border = '2px solid transparent';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          >
-            <Search size={18} style={{ color: '#9ca3af', marginRight: '0.5rem' }} />
-            <input
-              type="text"
-              placeholder="Search restaurants..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                fontSize: '0.9rem',
-                width: '100%',
-                color: '#1f2937'
-              }}
-              onFocus={(e) => {
-                e.target.parentElement.style.border = '2px solid #16a34a';
-                e.target.parentElement.style.boxShadow = '0 0 0 4px rgba(22, 163, 74, 0.2)';
-                e.target.parentElement.style.background = 'white';
-              }}
-              onBlur={(e) => {
-                e.target.parentElement.style.border = '2px solid transparent';
-                e.target.parentElement.style.boxShadow = 'none';
-                e.target.parentElement.style.background = '#f9fafb';
-              }}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={() => navigate('/CartPage')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1f2937',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-            onMouseLeave={(e) => e.target.style.background = 'none'}
-          >
-            <ShoppingCart size={22} />
-          </button>
-
-          <button
-            onClick={() => alert('Help & Support')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1f2937',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-            onMouseLeave={(e) => e.target.style.background = 'none'}
-          >
-            <HelpCircle size={22} />
-          </button>
-
-          <button
-            onClick={() => navigate('/ProfilePage')}
-            style={{
-              background: 'none',
-              border: '2px solid #e5e7eb',
-              color: '#1f2937',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.borderColor = '#16a34a';
-              e.target.style.color = '#16a34a';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.borderColor = '#e5e7eb';
-              e.target.style.color = '#1f2937';
-            }}
-          >
-            <User size={20} />
-            {user.name.split(' ')[0]}
-          </button>
-        </div>
-      </nav>
+      <Navbar
+        userData={user}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        activePage="vendors"
+        cartCount={cart.length || 0}
+      />
 
       <Container maxWidth="xl" sx={{ py: 4, mt: '80px' }}>
         {/* Category Icons Section */}
