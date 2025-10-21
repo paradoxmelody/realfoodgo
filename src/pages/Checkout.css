@@ -1,12 +1,19 @@
+/* ================= Checkout Page ================= */
 .checkout-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
+/* Header */
 .checkout-header {
   max-width: 1400px;
-  margin: 0 auto 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -38,15 +45,29 @@
   margin: 0;
 }
 
+/* Container & Grid Layout */
 .checkout-container {
   max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
   gap: 2rem;
 }
 
-/* Forms Section */
+.checkout-content {
+  display: contents;
+}
+
+/* Main Form Column */
+.checkout-main {
+  grid-column: 1 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Checkout Forms & Sections */
 .checkout-forms {
   display: flex;
   flex-direction: column;
@@ -185,8 +206,9 @@
   border-top: 2px solid #f3f4f6;
 }
 
-/* Order Summary */
+/* Order Summary Column */
 .checkout-summary {
+  grid-column: 2 / 3;
   position: sticky;
   top: 2rem;
   height: fit-content;
