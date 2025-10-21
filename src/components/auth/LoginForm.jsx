@@ -23,6 +23,7 @@ const LoginForm = ({ onSwitchToSignup }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
+  
   const checkLockout = (email) => {
     const lockoutData = localStorage.getItem(`lockout_${email}`);
     if (!lockoutData) return { isLocked: false, attempts: 0 };
@@ -123,6 +124,12 @@ const LoginForm = ({ onSwitchToSignup }) => {
       setMessage(errorMessage);
     } else {
       clearAttempts(email);
+      
+      // Save username to localStorage after successful login
+      const username = email.split('@')[0];
+      localStorage.setItem("username", username);
+      localStorage.setItem("isLoggedIn", "true");
+      
       setMessage("Login successful! Redirecting...");
       setTimeout(() => navigate("/vendor"), 1000);
     }

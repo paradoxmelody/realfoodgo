@@ -15,18 +15,45 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Badge from "@mui/material/Badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from '../../assets/images/foodgo.png';
 import './Navbar.css';
+import { signInWithEmailAndPassword } from "firebase/auth"; 
+import { auth } from "../../firebase_data/firebase"; 
+import { loginUser } from "../../firebase_data/auth"; 
+
+
 
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoggedIn = false;
   const cartCount = 0;
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem("username");
+    const loggedInStatus = localStorage.getItem("isLoggedIn") === "true";
+    if (storedUser && loggedInStatus) {
+      setUsername(storedUser);
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+    setUsername("");
+    navigate("/");
+    window.location.reload();
+  };
 
   const menuOptions = [
     { text: "Home", icon: <Home size={20} />, action: () => navigate('/') },
@@ -133,13 +160,41 @@ const Navbar = () => {
 
           {/* Login/Profile */}
           {isLoggedIn ? (
-            <button onClick={() => navigate('/ProfilePage')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }}>
-              <User size={22} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button 
+                onClick={() => navigate('/ProfilePage')} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  padding: '0.5rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  color: '#1f2937'
+                }}
+              >
+                <User size={22} />
+                <span>{username}</span>
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => navigate('/auth')}
-              style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', padding: '0.5rem 1.25rem', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{ 
+                backgroundColor: '#16a34a', 
+                color: 'white', 
+                border: 'none', 
+                padding: '0.5rem 1.25rem', 
+                borderRadius: '0.5rem', 
+                fontWeight: 600, 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem' 
+              }}
             >
               <User size={18} /> Login/Signup
             </button>
@@ -173,10 +228,10 @@ const Navbar = () => {
           <Box sx={{ px: 2 }}>
             {isLoggedIn ? (
               <button
-                onClick={() => { navigate('/ProfilePage'); setOpenMenu(false); }}
+                onClick={handleLogout}
                 style={{ width: '100%', backgroundColor: '#16a34a', color: 'white', border: 'none', padding: '0.75rem', borderRadius: '0.5rem', fontWeight: 600, cursor: 'pointer' }}
               >
-                Profile
+                Logout
               </button>
             ) : (
               <button

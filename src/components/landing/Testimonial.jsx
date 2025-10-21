@@ -61,8 +61,6 @@ const Testimonial = () => {
         <p className="primary-subheading">Reviews</p>
         <h1 className="primary-heading">What They Are Saying</h1>
         <p className="primary-text">
-          My name is Temiola Ademola Asegbon, FoodGo has been a home for me 
-          Melody Ugochukwu has shown me much love.
 
         </p>
       </motion.div>

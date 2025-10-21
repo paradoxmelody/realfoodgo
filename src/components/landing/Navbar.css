@@ -18,7 +18,8 @@
     /*background: url('src/assets/foodgo.png');*/
 }
 .logo img{
-    filter: brightness(1.3) drop-shadow(0 0 10px rgba(255, 107, 0, 0.3));
+    filter: brightness(1);
+    box-shadow: none;
 }
 
 .navbar a{

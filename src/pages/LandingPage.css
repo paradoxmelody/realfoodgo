@@ -58,8 +58,8 @@ body {
 }
 
 body {
-  /*background-color: #f6f6f6;*/
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1427 50%, #0f0f1e 100%);
+  color: #f6f6f6;
+  background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 50%, #f3f3f3 100%) !important;
 }
 
 nav {
@@ -107,11 +107,18 @@ nav {
   padding-top: 3rem;
 }
 .home-bannerImage-container {
-  position: absolute;
-  top: -100px;
-  right: -170px;
-  z-index: -2;
-  max-width: 700px;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.home-bannerImage-container img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
 }
 .home-image-section {
   max-width: 600px;

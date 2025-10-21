@@ -22,15 +22,17 @@ import {
   Home,
   Store,
   Search,
-  Eye
+  Eye,
+  Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs ,onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase_data/firebase';
 import { useAuth } from '../context/AuthContext';
 import foodgoLogo from './foodgo.png';
 import './ProfilePage.css';
+import Navbar from '../components/landing/Navbar';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -54,48 +56,60 @@ const ProfilePage = () => {
   ]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch user orders and calculate stats
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!currentUser) return;
+  if (!currentUser) return;
 
-      try {
-        setLoading(true);
+  setLoading(true);
 
-        // Fetch orders from Firestore
-        const ordersRef = collection(db, 'orders');
-        const q = query(ordersRef, where('userId', '==', currentUser.uid));
-        const querySnapshot = await getDocs(q);
+  // Fetch Firestore orders
+  const ordersRef = collection(db, 'orders');
+  const ordersQuery = query(ordersRef, where('userId', '==', currentUser.uid));
+  const unsubscribeOrders = onSnapshot(ordersQuery, (querySnapshot) => {
+    const userOrders = [];
+    let totalSpent = 0;
 
-        const userOrders = [];
-        let totalSpent = 0;
+    querySnapshot.forEach((doc) => {
+      const orderData = doc.data();
+      userOrders.push({ id: doc.id, ...orderData });
+      totalSpent += orderData.total || 0;
+    });
 
-        querySnapshot.forEach((doc) => {
-          const orderData = doc.data();
-          userOrders.push({
-            id: doc.id,
-            ...orderData
-          });
-          totalSpent += orderData.total || 0;
-        });
+    // Fetch localStorage orders
+    const localOrders = JSON.parse(localStorage.getItem('orders')) || [];
+    const myLocalOrders = localOrders.filter(o => o.userId === currentUser.uid);
+    myLocalOrders.forEach(o => {
+      userOrders.push({ id: o.timestamp, ...o }); // timestamp as id
+      totalSpent += o.pricing?.total || 0;
+    });
 
-        setOrders(userOrders);
+    // Sort orders by newest first
+    userOrders.sort((a, b) => new Date(b.timestamp || b.createdAt) - new Date(a.timestamp || a.createdAt));
 
-        // Update stats with real data
-        setStats([
-          { label: 'Orders', value: userOrders.length.toString(), icon: <ShoppingCart size={20} />, color: '#16a34a' },
-          { label: 'Favorites', value: '0', icon: <Heart size={20} />, color: '#ff6b35' },
-          { label: 'Total Spent', value: `R${totalSpent.toFixed(2)}`, icon: <Wallet size={20} />, color: '#f59e0b' }
-        ]);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const userRef = doc(db, 'users', currentUser.uid);
+    const unsubscribeUser = onSnapshot(userRef, (userSnap) => {
+      const userData = userSnap.data();
 
-    fetchUserData();
-  }, [currentUser]);
+      const favoriteRestaurants = userData?.favorites?.restaurants?.length || 0;
+      const favoriteFoods = userData?.favorites?.foods?.length || 0;
+
+      setOrders(userOrders);
+      setStats([
+        { label: 'Orders', value: userOrders.length.toString(), icon: <ShoppingCart size={20} />, color: '#16a34a' },
+        { label: 'Favorite Restaurants', value: favoriteRestaurants.toString(), icon: <Heart size={20} />, color: '#ff6b35' },
+        { label: 'Favorite Foods', value: favoriteFoods.toString(), icon: <Heart size={20} />, color: '#f43f5e' },
+        { label: 'Total Spent', value: `R${totalSpent.toFixed(2)}`, icon: <Wallet size={20} />, color: '#f59e0b' },
+      ]);
+    });
+
+    setLoading(false);
+
+    return () => unsubscribeUser(); // clean up user snapshot
+  });
+
+  return () => unsubscribeOrders(); // clean up orders snapshot
+}, [currentUser]);
+
+
 
   // Update user when userDetails changes
   useEffect(() => {
@@ -152,7 +166,6 @@ const ProfilePage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
@@ -191,195 +204,7 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-container" style={{ overflowX: 'hidden' }}>
-      {/* Custom Navbar */}
-      <nav style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        padding: '1rem 5%',
-        background: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 100,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <div style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img src={foodgoLogo} width={50} height={40} alt="logo" />
-          </div>
-
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1f2937',
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-              onMouseLeave={(e) => e.target.style.background = 'none'}
-            >
-              <Home size={20} />
-              Home
-            </button>
-
-            <button
-              onClick={() => navigate('/vendor')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1f2937',
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-              onMouseLeave={(e) => e.target.style.background = 'none'}
-            >
-              <Store size={20} />
-              Vendors
-            </button>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div style={{
-          flexGrow: 1,
-          maxWidth: '500px',
-          margin: '0 2rem'
-        }}>
-          <div style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            background: '#f9fafb',
-            borderRadius: '1.5rem',
-            padding: '0.6rem 1rem',
-            border: '2px solid transparent',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.border = '2px solid #16a34a';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(22, 163, 74, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.border = '2px solid transparent';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          >
-            <Search size={18} style={{ color: '#9ca3af', marginRight: '0.5rem' }} />
-            <input
-              type="text"
-              placeholder="Search restaurants..."
-              style={{
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                fontSize: '0.9rem',
-                width: '100%',
-                color: '#1f2937'
-              }}
-              onFocus={(e) => {
-                e.target.parentElement.style.border = '2px solid #16a34a';
-                e.target.parentElement.style.boxShadow = '0 0 0 4px rgba(22, 163, 74, 0.2)';
-                e.target.parentElement.style.background = 'white';
-              }}
-              onBlur={(e) => {
-                e.target.parentElement.style.border = '2px solid transparent';
-                e.target.parentElement.style.boxShadow = 'none';
-                e.target.parentElement.style.background = '#f9fafb';
-              }}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={() => navigate('/CartPage')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1f2937',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-            onMouseLeave={(e) => e.target.style.background = 'none'}
-          >
-            <ShoppingCart size={20} />
-            Cart
-          </button>
-
-          <button
-            onClick={() => alert('Help & Support')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#1f2937',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-              fontWeight: 500,
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#f3f4f6'}
-            onMouseLeave={(e) => e.target.style.background = 'none'}
-          >
-            <HelpCircle size={20} />
-            Help
-          </button>
-
-          <button
-            style={{
-              background: '#16a34a',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#15803d'}
-            onMouseLeave={(e) => e.target.style.background = '#16a34a'}
-          >
-            <User size={20} />
-            {user.name ? user.name.split(' ')[0] : 'Profile'}
-          </button>
-        </div>
-      </nav>
+      <Navbar/>
 
       <main className="profile-main" style={{
         marginTop: '80px',
