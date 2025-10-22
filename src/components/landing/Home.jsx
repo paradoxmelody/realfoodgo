@@ -2,7 +2,7 @@ import { FiArrowRight } from "react-icons/fi";
 import { GiChickenLeg, GiDonut, GiFrenchFries, GiHamburger, GiNoodles, GiPizzaSlice, GiSodaCan, GiTacos } from "react-icons/gi";
 import { Pizza, Sandwich, Salad, Coffee, IceCream, UtensilsCrossed } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import BannerBackground from "../../assets/images/jbadASS.jpg";
+//import BannerBackground from "../../assets/images/jbadASS.jpg";
 
 import Navbar from "./Navbar";
 import "./Home.css";
@@ -45,7 +45,7 @@ const Home = () => {
           pointerEvents: 'none',
           zIndex: 0
         }} />
-        
+
         <GiHamburger style={{
           position: 'absolute',
           fontSize: '65px',
@@ -56,7 +56,7 @@ const Home = () => {
           pointerEvents: 'none',
           zIndex: 0
         }} />
-        
+
         <GiTacos style={{
           position: 'absolute',
           fontSize: '55px',
@@ -167,4 +167,3 @@ const Home = () => {
 };
 
 export default Home;
- 

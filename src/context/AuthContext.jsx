@@ -8,7 +8,7 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase_data/firebase';
 
 const AuthContext = createContext();
@@ -26,34 +26,30 @@ export const AuthProvider = ({ children }) => {
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Keep session persistent across browser restarts - NO AUTO LOGOUT
   useEffect(() => {
+    let unsubscribeUserData;
+
+    // Set persistence for session
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
           setCurrentUser(user);
 
           if (user) {
-            try {
-              // Real-time listener for user data
-              const userRef = doc(db, 'users', user.uid);
-
-              // Use onSnapshot for real-time updates
-              const unsubscribeUserData = onSnapshot(userRef, (userSnap) => {
+            const userRef = doc(db, 'users', user.uid);
+            unsubscribeUserData = onSnapshot(
+              userRef,
+              (userSnap) => {
                 if (userSnap.exists()) {
                   setUserDetails(userSnap.data());
                 } else {
                   setUserDetails(null);
                 }
-              }, (error) => {
+              },
+              (error) => {
                 console.error('Error listening to user data:', error);
-              });
-
-              // Store unsubscribe function to clean up later
-              return () => unsubscribeUserData();
-            } catch (error) {
-              console.error('Error setting up user listener:', error);
-            }
+              }
+            );
           } else {
             setUserDetails(null);
           }
@@ -61,7 +57,11 @@ export const AuthProvider = ({ children }) => {
           setLoading(false);
         });
 
-        return unsubscribe;
+        // Cleanup on unmount
+        return () => {
+          unsubscribeAuth();
+          if (unsubscribeUserData) unsubscribeUserData();
+        };
       })
       .catch((error) => {
         console.error('Error setting persistence:', error);
@@ -88,17 +88,13 @@ export const AuthProvider = ({ children }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Create user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         name,
         email,
         phone,
         avatar: null,
         createdAt: new Date(),
-        favorites: {
-          restaurants: [],
-          foods: []
-        },
+        favorites: { restaurants: [], foods: [] },
         paymentMethods: [],
         cart: []
       });
@@ -133,7 +129,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {loading ? <p style={{ textAlign: 'center', marginTop: '5rem' }}>Loading...</p> : children}
     </AuthContext.Provider>
   );
 };

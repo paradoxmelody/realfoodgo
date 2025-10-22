@@ -55,6 +55,12 @@ const ProfilePage = () => {
   const [loggingOut, setLoggingOut] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [newPaymentMethod, setNewPaymentMethod] = useState({ cardNumber: '', cardHolder: '', expiry: '', cvv: '' });
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000);
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -92,8 +98,6 @@ const ProfilePage = () => {
 
           for (const docSnap of querySnapshot.docs) {
             const orderData = docSnap.data();
-
-            // Fetch vendor name from vendors collection
             let vendorName = orderData.vendorName || orderData.vendor || 'Unknown Vendor';
             if (orderData.vendorId) {
               try {
@@ -103,7 +107,7 @@ const ProfilePage = () => {
                   vendorName = vendorSnap.data().name || vendorName;
                 }
               } catch (err) {
-                console.error('Error fetching vendor:', err);
+                // Silent error handling
               }
             }
 
@@ -131,7 +135,7 @@ const ProfilePage = () => {
           setLoading(false);
         });
       } catch (error) {
-        console.error('Error setting up listeners:', error);
+        showNotification('Unable to load your profile. Please refresh the page.', 'error');
         setLoading(false);
       }
     };
@@ -147,11 +151,10 @@ const ProfilePage = () => {
     setLoggingOut(true);
     try {
       await logout();
-      alert('You have been logged out successfully!');
+      showNotification('You have been logged out successfully!');
       navigate('/auth');
     } catch (error) {
-      console.error('Logout error:', error);
-      alert('Failed to logout');
+      showNotification('Unable to logout. Please try again.', 'error');
       setLoggingOut(false);
     }
   };
@@ -167,13 +170,12 @@ const ProfilePage = () => {
       if (Object.keys(updates).length > 0) {
         await updateDoc(userRef, updates);
         setEditMode(false);
-        alert('Profile updated successfully!');
+        showNotification('Profile updated successfully!');
       } else {
         setEditMode(false);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      showNotification('Unable to update profile. Please try again.', 'error');
     }
   };
 
@@ -182,11 +184,11 @@ const ProfilePage = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      showNotification('Please select an image file', 'error');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      showNotification('File size must be less than 5MB', 'error');
       return;
     }
 
@@ -198,10 +200,9 @@ const ProfilePage = () => {
       const downloadURL = await getDownloadURL(storageRef);
       const userRef = doc(db, 'users', currentUser.uid);
       await updateDoc(userRef, { avatar: downloadURL });
-      alert('Profile picture updated successfully!');
+      showNotification('Profile picture updated successfully!');
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      showNotification('Unable to upload image. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
@@ -210,7 +211,7 @@ const ProfilePage = () => {
   const handleAddPaymentMethod = async () => {
     if (!currentUser) return;
     if (!newPaymentMethod.cardNumber || !newPaymentMethod.cardHolder || !newPaymentMethod.expiry || !newPaymentMethod.cvv) {
-      alert('Please fill in all payment details');
+      showNotification('Please fill in all payment details', 'error');
       return;
     }
 
@@ -219,10 +220,9 @@ const ProfilePage = () => {
       const updatedMethods = [...paymentMethods, { ...newPaymentMethod, id: Date.now().toString() }];
       await updateDoc(userRef, { paymentMethods: updatedMethods });
       setNewPaymentMethod({ cardNumber: '', cardHolder: '', expiry: '', cvv: '' });
-      alert('Payment method added successfully!');
+      showNotification('Payment method added successfully!');
     } catch (error) {
-      console.error('Error adding payment method:', error);
-      alert('Failed to add payment method');
+      showNotification('Unable to add payment method. Please try again.', 'error');
     }
   };
 
@@ -232,10 +232,9 @@ const ProfilePage = () => {
       const userRef = doc(db, 'users', currentUser.uid);
       const updatedMethods = paymentMethods.filter(m => m.id !== methodId);
       await updateDoc(userRef, { paymentMethods: updatedMethods });
-      alert('Payment method removed successfully!');
+      showNotification('Payment method removed successfully!');
     } catch (error) {
-      console.error('Error removing payment method:', error);
-      alert('Failed to remove payment method');
+      showNotification('Unable to remove payment method. Please try again.', 'error');
     }
   };
 
@@ -263,7 +262,7 @@ const ProfilePage = () => {
       label: 'Security & Privacy',
       icon: <Lock size={20} />,
       color: '#8b5cf6',
-      action: () => alert('Security & Privacy settings coming soon!')
+      action: () => showNotification('Security & Privacy settings coming soon!', 'info')
     },
     {
       label: 'Help & Support',
@@ -275,7 +274,7 @@ const ProfilePage = () => {
       label: 'Terms & Conditions',
       icon: <FileText size={20} />,
       color: '#64748b',
-      action: () => alert('Terms & Conditions will be displayed here')
+      action: () => showNotification('Terms & Conditions will be displayed here', 'info')
     },
     {
       label: 'Logout',
@@ -289,6 +288,24 @@ const ProfilePage = () => {
     <div className="profile-container" style={{ overflowX: 'hidden' }}>
       <Navbar />
       <div style={{ height: '80px' }} />
+
+      {/* Notification Toast */}
+      {notification.show && (
+        <div style={{
+          position: 'fixed',
+          top: '100px',
+          right: '20px',
+          zIndex: 3000,
+          backgroundColor: notification.type === 'error' ? '#ef4444' : notification.type === 'info' ? '#3b82f6' : '#16a34a',
+          color: 'white',
+          padding: '1rem 1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          maxWidth: '400px'
+        }}>
+          {notification.message}
+        </div>
+      )}
 
       <main className="profile-main" style={{
         padding: '2rem 5%',
@@ -588,22 +605,50 @@ const ProfilePage = () => {
           </>
         )}
 
-        {/* Settings Tab */}
+        {/* Settings Tab - FIXED COLORS */}
         {activeTab === 'settings' && (
           <div className="settings-section">
-            <h2 className="settings-title">Settings</h2>
-            <div className="settings-menu">
+            <h2 className="settings-title" style={{ color: '#111827', marginBottom: '2rem', fontSize: '1.8rem' }}>Settings</h2>
+            <div className="settings-menu" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {settingsMenu.map((item, idx) => (
                 <button
                   key={idx}
                   className="settings-item"
                   onClick={item.action}
-                  style={{ borderLeftColor: item.color }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '1.25rem',
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderLeft: `4px solid ${item.color}`,
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}
                 >
                   <div className="settings-icon" style={{ color: item.color }}>
                     {item.icon}
                   </div>
-                  <span className="settings-label">{item.label}</span>
+                  <span className="settings-label" style={{
+                    flex: 1,
+                    fontSize: '1.05rem',
+                    fontWeight: '600',
+                    color: '#111827',
+                    textAlign: 'left'
+                  }}>
+                    {item.label}
+                  </span>
                   <span className="settings-arrow">
                     <ChevronRight size={20} color="#9ca3af" />
                   </span>
@@ -614,7 +659,7 @@ const ProfilePage = () => {
         )}
       </main>
 
-      {/* Payment Methods Modal */}
+      {/* Payment Methods Modal - SIMPLE VERSION */}
       {showPaymentModal && (
         <div style={{
           position: 'fixed',
@@ -656,10 +701,10 @@ const ProfilePage = () => {
                 cursor: 'pointer'
               }}
             >
-              <X size={20} />
+              <X size={20} color="#111827" />
             </button>
 
-            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', fontWeight: '700' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', fontWeight: '700', color: '#111827' }}>
               Payment Methods
             </h3>
 
@@ -679,7 +724,7 @@ const ProfilePage = () => {
                     alignItems: 'center'
                   }}>
                     <div>
-                      <p style={{ margin: 0, fontWeight: '600' }}>{method.cardHolder}</p>
+                      <p style={{ margin: 0, fontWeight: '600', color: '#111827' }}>{method.cardHolder}</p>
                       <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280', fontSize: '0.9rem' }}>
                         •••• {method.cardNumber.slice(-4)}
                       </p>
@@ -703,7 +748,7 @@ const ProfilePage = () => {
             </div>
 
             {/* Add New Payment Method */}
-            <h4 style={{ marginBottom: '1rem' }}>Add New Card</h4>
+            <h4 style={{ marginBottom: '1rem', color: '#111827' }}>Add New Card</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <input
                 type="text"
@@ -714,7 +759,8 @@ const ProfilePage = () => {
                   padding: '0.75rem',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  color: '#111827'
                 }}
               />
               <input
@@ -726,7 +772,8 @@ const ProfilePage = () => {
                   padding: '0.75rem',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  color: '#111827'
                 }}
               />
               <div style={{ display: 'flex', gap: '1rem' }}>
@@ -740,7 +787,8 @@ const ProfilePage = () => {
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                     fontSize: '1rem',
-                    flex: 1
+                    flex: 1,
+                    color: '#111827'
                   }}
                 />
                 <input
@@ -753,7 +801,8 @@ const ProfilePage = () => {
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                     fontSize: '1rem',
-                    flex: 1
+                    flex: 1,
+                    color: '#111827'
                   }}
                 />
               </div>
@@ -823,25 +872,25 @@ const ProfilePage = () => {
                 cursor: 'pointer'
               }}
             >
-              <X size={20} />
+              <X size={20} color="#111827" />
             </button>
 
-            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.5rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#111827' }}>
               <HelpCircle size={24} color="#16a34a" /> Help & Support
             </h3>
 
             <div style={{ marginBottom: '2rem' }}>
               <h4 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#16a34a' }}>Contact Us</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#111827' }}>
                   <Mail size={18} color="#6b7280" />
                   <span>Email: support@foodgo.co.za</span>
                 </p>
-                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#111827' }}>
                   <Phone size={18} color="#6b7280" />
                   <span>Phone: +27 123 456 789</span>
                 </p>
-                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#111827' }}>
                   <MessageSquare size={18} color="#6b7280" />
                   <span>Live Chat: Available 24/7</span>
                 </p>
@@ -952,7 +1001,7 @@ const ProfilePage = () => {
               <LogOut size={32} color="#ef4444" />
             </div>
 
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '700' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '700', color: '#111827' }}>
               {loggingOut ? 'Logging Out...' : 'Confirm Logout'}
             </h3>
             <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
