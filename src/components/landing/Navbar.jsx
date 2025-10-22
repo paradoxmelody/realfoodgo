@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Badge } from '@mui/material';
-import { Home, Store, ShoppingCart, User, Search, HelpCircle } from 'lucide-react';
+import {Home, Store, ShoppingCart, User, Search, HelpCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import foodgoLogo from '../../assets/images/foodgo.png';
@@ -18,7 +18,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
     setCartCount(count);
   }, [getTotalItems]);
 
-  const user = userDetails || { name: 'User' };
+  const user = userDetails || { name: 'Login' };
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -39,106 +39,114 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        p: '1rem 5%',
+        p: { xs: '0.5rem 2%', sm: '0.75rem 3%', md: '1rem 5%' },
         maxWidth: '1600px',
         margin: '0 auto'
       }}>
 
         {/* Logo + Nav Links */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5, md: 3 } }}>
           <Box sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img src={foodgoLogo} alt="FoodGo" width={200} height={200} />
+            <img
+              src={foodgoLogo}
+              alt="FoodGo"
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: '80px',
+                maxHeight: '50px'
+              }}
+            />
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <button
-              onClick={() => navigate('/')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                background: isActive('/') ? '#f3f4f6' : 'none',
-                color: isActive('/') ? '#16a34a' : '#1f2937',
-                fontWeight: 500,
-                fontSize: '0.95rem'
-              }}
-            >
-              <Home size={18} color={isActive('/') ? '#16a34a' : '#1f2937'} /> Home
-            </button>
-
+          <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1, md: 2 } }}>
             <button
               onClick={() => navigate('/vendor')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 1rem',
+                gap: '0.3rem',
+                padding: window.innerWidth < 640 ? '0.4rem 0.6rem' : '0.5rem 1rem',
                 borderRadius: '0.5rem',
                 border: 'none',
                 cursor: 'pointer',
                 background: isActive('/vendor') ? '#f3f4f6' : 'none',
                 color: isActive('/vendor') ? '#16a34a' : '#1f2937',
                 fontWeight: 600,
-                fontSize: '0.95rem'
+                fontSize: window.innerWidth < 640 ? '0.8rem' : '0.95rem',
+                whiteSpace: 'nowrap'
               }}
             >
-              <Store size={18} color={isActive('/vendor') ? '#16a34a' : '#1f2937'} /> Vendors
+              <Home size={window.innerWidth < 640 ? 16 : 18} color={isActive('/vendor') ? '#16a34a' : '#1f2937'} />
+              {window.innerWidth < 640 ? 'Home' : 'Home'}
             </button>
           </Box>
         </Box>
 
         {/* Search Bar */}
-        <Box sx={{ flexGrow: 1, maxWidth: 500, mx: 3 }}>
+        <Box sx={{
+          flexGrow: 1,
+          maxWidth: { xs: '120px', sm: '250px', md: '500px' },
+          mx: { xs: 0.5, sm: 1.5, md: 3 }
+        }}>
           <Box sx={{
             display: 'flex',
             alignItems: 'center',
             bgcolor: '#f9fafb',
             borderRadius: '2rem',
-            px: 2,
-            py: 0.5,
+            px: { xs: 1, sm: 1.5, md: 2 },
+            py: { xs: 0.3, sm: 0.4, md: 0.5 },
             border: '2px solid transparent',
             transition: 'all 0.3s ease',
             '&:focus-within': {
               borderColor: '#16a34a'
             }
           }}>
-            <Search size={25} style={{ color: '#9ca3af', marginRight: 8 }} />
+            <Search
+              size={window.innerWidth < 640 ? 16 : window.innerWidth < 900 ? 20 : 25}
+              style={{ color: '#9ca3af', marginRight: window.innerWidth < 640 ? 4 : 8, flexShrink: 0 }}
+            />
             <input
               type="text"
-              placeholder="Search restaurants..."
+              placeholder={window.innerWidth < 640 ? "Search..." : "Search restaurants..."}
               value={searchQuery || ''}
               onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
               style={{
                 border: 'none',
                 outline: 'none',
                 width: '100%',
-                background: 'transparent'
+                background: 'transparent',
+                fontSize: window.innerWidth < 640 ? '0.8rem' : '1rem'
               }}
             />
           </Box>
         </Box>
 
         {/* Right Icons */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5, md: 3 } }}>
           {/* Cart with count */}
           <button
             onClick={() => navigate('/CartPage')}
             style={{
               background: 'none',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              padding: '0.25rem'
             }}
           >
             <Badge
               badgeContent={cartCount}
               color="error"
+              sx={{
+                '& .MuiBadge-badge': {
+                  fontSize: window.innerWidth < 640 ? '0.65rem' : '0.75rem',
+                  minWidth: window.innerWidth < 640 ? '16px' : '20px',
+                  height: window.innerWidth < 640 ? '16px' : '20px'
+                }
+              }}
             >
               <ShoppingCart
-                size={22}
+                size={window.innerWidth < 640 ? 18 : 22}
                 color={isActive('/CartPage') ? '#16a34a' : '#111827'}
               />
             </Badge>
@@ -149,10 +157,14 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             style={{
               background: 'none',
               border: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              padding: '0.25rem'
             }}
           >
-            <HelpCircle size={22} color={isActive('/help') ? '#16a34a' : '#111827'} />
+            <HelpCircle
+              size={window.innerWidth < 640 ? 18 : 22}
+              color={isActive('/help') ? '#16a34a' : '#111827'}
+            />
           </button>
 
           <button
@@ -160,17 +172,18 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1rem',
+              gap: '0.4rem',
+              padding: window.innerWidth < 640 ? '0.4rem 0.6rem' : '0.5rem 1rem',
               borderRadius: '0.5rem',
               border: '2px solid #e5e7eb',
               color: isActive('/ProfilePage') ? '#16a34a' : '#1f2937',
               fontWeight: 600,
-              fontSize: '0.95rem',
-              cursor: 'pointer'
+              fontSize: window.innerWidth < 640 ? '0.8rem' : '0.95rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
-            <User size={20} color={isActive('/ProfilePage') ? '#16a34a' : '#1f2937'} />
+            <User size={window.innerWidth < 640 ? 16 : 20} color={isActive('/ProfilePage') ? '#16a34a' : '#1f2937'} />
             {user?.name?.split(' ')[0] || 'User'}
           </button>
         </Box>
