@@ -8,7 +8,6 @@ import {
   Container,
   Grid,
   Rating,
-  Toolbar,
   Typography,
   Snackbar,
   Alert,
@@ -46,19 +45,25 @@ const Menu = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [addingItem, setAddingItem] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
         fetchUserData(user.uid);
-      } else navigate('/login');
+      } else {
+        navigate('/login');
+      }
     });
     return () => unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
-    if (currentUser) fetchVendorAndMenu();
+    if (currentUser && vendorId) {
+      fetchVendorAndMenu();
+    }
   }, [vendorId, currentUser]);
 
   useEffect(() => {
@@ -69,17 +74,28 @@ const Menu = () => {
     try {
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) setUserData(userSnap.data());
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+      if (userSnap.exists()) {
+        setUserData(userSnap.data());
+      }
+    } catch (err) {
+      setError('Unable to load your profile. Please refresh the page.');
     }
   }
 
   async function fetchVendorAndMenu() {
+    setLoading(true);
+    setError('');
     try {
       const vendorRef = doc(db, 'vendors', vendorId);
       const vendorSnap = await getDoc(vendorRef);
-      if (vendorSnap.exists()) setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
+
+      if (vendorSnap.exists()) {
+        setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
+      } else {
+        setError('Restaurant not found');
+        setLoading(false);
+        return;
+      }
 
       const menuQuery = query(collection(db, 'menu_items'), where('vendorId', '==', vendorId));
       const menuSnapshot = await getDocs(menuQuery);
@@ -87,8 +103,10 @@ const Menu = () => {
 
       setMenuItems(menuList);
       setFilteredItems(menuList);
-    } catch (error) {
-      console.error('Error fetching menu:', error);
+      setLoading(false);
+    } catch (err) {
+      setError('Unable to load menu. Please check your connection and try again.');
+      setLoading(false);
     }
   }
 
@@ -114,20 +132,43 @@ const Menu = () => {
     try {
       await addToCartContext(item);
       setSnackbarMessage(`${item.name} added to your cart!`);
-    } catch (error) {
-      setSnackbarMessage('Failed to add item. Please try again.');
-    } finally {
       setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage('Failed to add item. Please try again.');
+      setSnackbarOpen(true);
+    } finally {
       setAddingItem(false);
     }
   }
 
-  if (!vendor)
+  if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Typography variant="h5">Restaurant not found</Typography>
+      <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
+        <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} userData={userData} activePage="Vendors" />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+          <Typography variant="h5" sx={{ color: '#166534' }}>Loading menu...</Typography>
+        </Box>
       </Box>
     );
+  }
+
+  if (error || !vendor) {
+    return (
+      <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
+        <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} userData={userData} activePage="Vendors" />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="h5" sx={{ color: '#dc2626' }}>{error || 'Restaurant not found'}</Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/vendor')}
+            sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}
+          >
+            Back to Vendors
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   const categories = ['All', ...new Set(menuItems.map((item) => item.category))];
   const categoryIcons = {
@@ -150,30 +191,106 @@ const Menu = () => {
   return (
     <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh' }}>
       <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} userData={userData} activePage="Vendors" />
-      <Toolbar />
+      <Box sx={{ height: '80px' }} />
 
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        {/* Vendor Info */}
+        {/* Vendor Info - Uber Eats Style */}
         <Box
           sx={{
             mb: 4,
-            p: 4,
             bgcolor: 'white',
             borderRadius: 3,
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            border: '1px solid #dcfce7',
+            overflow: 'hidden',
           }}
         >
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#166534', mb: 2 }}>
-            {vendor.name}
-          </Typography>
+          {/* Vendor Cover Image */}
+          {vendor.image && (
+            <Box
+              component="img"
+              src={vendor.image}
+              alt={vendor.name}
+              sx={{
+                width: '100%',
+                height: { xs: '180px', sm: '220px', md: '280px' },
+                objectFit: 'cover',
+              }}
+            />
+          )}
+
+          {/* Vendor Details */}
+          <Box sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#166534', fontSize: { xs: '1.5rem', sm: '2rem' }, mb: 1 }}>
+              {vendor.name}
+            </Typography>
+
+            {vendor.rating && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
+                <Rating value={vendor.rating} precision={0.1} readOnly size="small" />
+                <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                  {vendor.rating}
+                </Typography>
+              </Box>
+            )}
+
+            {vendor.description && (
+              <Typography variant="body1" sx={{ color: '#6b7280', mb: 1, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                {vendor.description}
+              </Typography>
+            )}
+            {vendor.address && (
+              <Typography variant="body2" sx={{ color: '#9ca3af', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                📍 {vendor.address}
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         {/* Category Chips */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#166534', mb: 2 }}>
-            Filter by Category
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#166534', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              Filter by Category
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Chip
+                label="Rating"
+                onClick={() => setSortBy('rating')}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  bgcolor: sortBy === 'rating' ? '#16a34a' : 'white',
+                  color: sortBy === 'rating' ? 'white' : '#1f2937',
+                  border: sortBy === 'rating' ? 'none' : '2px solid #e5e7eb',
+                  '&:hover': { bgcolor: sortBy === 'rating' ? '#15803d' : '#f0fdf4' },
+                }}
+              />
+              <Chip
+                label="Price: Low"
+                onClick={() => setSortBy('price-low')}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  bgcolor: sortBy === 'price-low' ? '#16a34a' : 'white',
+                  color: sortBy === 'price-low' ? 'white' : '#1f2937',
+                  border: sortBy === 'price-low' ? 'none' : '2px solid #e5e7eb',
+                  '&:hover': { bgcolor: sortBy === 'price-low' ? '#15803d' : '#f0fdf4' },
+                }}
+              />
+              <Chip
+                label="Price: High"
+                onClick={() => setSortBy('price-high')}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  bgcolor: sortBy === 'price-high' ? '#16a34a' : 'white',
+                  color: sortBy === 'price-high' ? 'white' : '#1f2937',
+                  border: sortBy === 'price-high' ? 'none' : '2px solid #e5e7eb',
+                  '&:hover': { bgcolor: sortBy === 'price-high' ? '#15803d' : '#f0fdf4' },
+                }}
+              />
+            </Box>
+          </Box>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {categories.map((category) => (
               <Chip
@@ -185,6 +302,7 @@ const Menu = () => {
                   py: 2.5,
                   px: 1,
                   fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
                   bgcolor: selectedCategory === category ? categoryColors[category] || '#16a34a' : 'white',
                   color: selectedCategory === category ? 'white' : '#1f2937',
                   border: selectedCategory === category ? 'none' : '2px solid #e5e7eb',
@@ -194,6 +312,15 @@ const Menu = () => {
             ))}
           </Box>
         </Box>
+
+        {/* No Items Message */}
+        {filteredItems.length === 0 && (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Typography variant="h6" sx={{ color: '#6b7280' }}>
+              No items found
+            </Typography>
+          </Box>
+        )}
 
         {/* Menu Items */}
         <Grid container spacing={3}>
@@ -209,19 +336,17 @@ const Menu = () => {
                   boxShadow: '0 3px 10px rgba(0,0,0,0.1)',
                 }}
               >
-                {/* ✅ Consistent Image Size */}
                 <CardMedia
                   component="img"
                   image={item.image || 'https://via.placeholder.com/400x300'}
                   alt={item.name}
                   sx={{
-                    height: 200, // consistent image height
+                    height: 200,
                     width: '100%',
                     objectFit: 'cover',
                   }}
                 />
 
-                {/* ✅ Content section balanced for equal height cards */}
                 <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#166534', mb: 0.5 }}>
                     {item.name}
@@ -251,16 +376,18 @@ const Menu = () => {
                   <Button
                     fullWidth
                     variant="contained"
+                    disabled={addingItem}
                     sx={{
                       bgcolor: '#16a34a',
                       mt: 2,
                       borderRadius: 2,
                       '&:hover': { bgcolor: '#15803d' },
+                      '&:disabled': { bgcolor: '#d1d5db' },
                     }}
                     onClick={() => handleAddToCart(item)}
                     startIcon={<Plus size={16} />}
                   >
-                    Add to Cart
+                    {addingItem ? 'Adding...' : 'Add to Cart'}
                   </Button>
                 </CardContent>
               </Card>
@@ -269,7 +396,6 @@ const Menu = () => {
         </Grid>
       </Container>
 
-      {/* ✅ Single Snackbar (Orange) */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={2500}
